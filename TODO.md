@@ -1,9 +1,9 @@
 # USING DEVTOOLS
 
-devtools::load_all() load your package (when run inside its folder)
-devtools::test() to run all tests 
-devtools::test_active_file() run test on active file
-devtools::document() automatic generation of .Rd files in the man folder
+- devtools::load_all() load your package (when run inside its folder)
+- devtools::test() to run all tests 
+- devtools::test_active_file() run test on active file
+- devtools::document() automatic generation of .Rd files in the man folder
 
 # Change log 
 
@@ -39,8 +39,7 @@ devtools::document() automatic generation of .Rd files in the man folder
 - My pdf Filtering Process for estimation (PDF DOC) is missing et = zt * ht in the equation
 - Error message for computing std using hessian, not informative. users need mathematical reasons to investigage better the output of the function. 
 - enforce stationarity using sqp.restriction algorithm must be tested with others datasets.
-
-
+- fix gamma = 0 for estimation in aparch. 
 
 
 

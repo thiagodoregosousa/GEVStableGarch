@@ -10,19 +10,30 @@
 .AppleDouble
 .LSOverride
 
-
-
 # -------------------------
 # R build files
 # -------------------------
 man/*
 
 # -------------------------
+# testthat snapshots
+# -------------------------
+tests/testthat/_snaps/
+
+# -------------------------
+# Local exploratory data and fit outputs (scripts are tracked)
+# -------------------------
+dev/**/*.xlsx
+dev/**/*.csv
+dev/exploratory/petro_fit
+dev/exploratory/vale_fit
+dev/exploratory/fit_arma_garch_stable
+
+# -------------------------
 # R / RStudio
 # -------------------------
-
 .Rhistory
 .RData
 .Ruserdata
 .Rproj.user/
-.Rproj.user/*
+*.Rproj

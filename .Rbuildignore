@@ -1,2 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^dev$
+^TODO\.md$
+^PLAN\.md$

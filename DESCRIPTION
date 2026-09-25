@@ -12,4 +12,5 @@ Imports: fGarch,fExtremes,stabledist,timeDate,timeSeries
 Enhances: stable
 Note: Package stable is available at http://www.robustanalysis.com
 LazyData: yes
+Encoding: UTF-8
 RoxygenNote: 7.3.3
