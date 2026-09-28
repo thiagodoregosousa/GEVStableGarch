@@ -20,7 +20,7 @@ License: GPL (>= 2)
 URL: https://github.com/thiagodoregosousa/GEVStableGarch
 BugReports: https://github.com/thiagodoregosousa/GEVStableGarch/issues
 Depends: R (>= 4.1.0)
-Imports: libstable4u, stats
+Imports: libstable4u, Rsolnp, stats, utils
 Suggests: fGarch, stabledist, testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8

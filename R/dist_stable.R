@@ -25,7 +25,7 @@ gs_stable <- function(lower = c(stable_alpha = 1.01, stable_beta = -0.99),
   pars <- function(par) c(par[["stable_alpha"]], par[["stable_beta"]], 1, 0)
   gs_dist(
     name = "stable",
-    log_density = function(z, par) log(libstable4u::stable_pdf(z, pars(par), 0L)),
+    log_density = function(z, par) log(.stable_pdf(z, par[["stable_alpha"]], par[["stable_beta"]])),
     random = function(n, par) libstable4u::stable_rnd(n, pars(par), 0L),
     cdf = function(q, par) libstable4u::stable_cdf(q, pars(par), 0L),
     quantile = function(p, par) libstable4u::stable_q(p, pars(par), 0L),
@@ -44,4 +44,24 @@ gs_stable <- function(lower = c(stable_alpha = 1.01, stable_beta = -0.99),
       c(stable_alpha = est[[1]], stable_beta = est[[2]])
     },
     check = FALSE)
+}
+
+# libstable4u (1.0.5) returns about half the density for points at distance ~1e-5
+# from zeta = -beta tan(pi alpha / 2), the special point of the S0 integral
+# representation (wider when alpha is close to 1). The resulting jumps in the log
+# likelihood break optimization and the Hessian. Inside a small window around zeta
+# the density is replaced by the quadratic through three points where it is exact.
+.stable_pdf <- function(z, alpha, beta)
+{
+  pars <- c(alpha, beta, 1, 0)
+  f <- libstable4u::stable_pdf(z, pars, 0L)
+  zeta <- -beta * tan(pi * alpha / 2)
+  w <- if (alpha < 1.2) 0.02 else 1e-3
+  near <- abs(z - zeta) < w
+  if (any(near)) {
+    y <- libstable4u::stable_pdf(zeta + c(-w, 0, w), pars, 0L)
+    t <- (z[near] - zeta) / w
+    f[near] <- y[2] + t * (y[3] - y[1]) / 2 + t^2 * (y[3] - 2 * y[2] + y[1]) / 2
+  }
+  f
 }

@@ -109,3 +109,14 @@ test_that("pgat keeps full accuracy next to zero", {
   num <- (pgat(eps, nu = 2, d = 4) - pgat(-eps, nu = 2, d = 4)) / (2 * eps)
   expect_equal(num, dgat(0, nu = 2, d = 4), tolerance = 1e-6)
 })
+
+test_that("stable density is correct next to zeta, where libstable4u 1.0.5 is not", {
+  skip_if_not_installed("stabledist")
+  for (a in c(1.3, 1.75, 1.95)) for (b in c(-0.9, -0.3, 0.3, 0.9)) {
+    zeta <- -b * tan(pi * a / 2)
+    z <- zeta + c(-1e-3, -1e-4, -3e-5, -1e-5, -1e-6, 0, 1e-6, 1e-5, 3e-5, 1e-4, 1e-3)
+    ours <- exp(gs_stable()$log_density(z, c(stable_alpha = a, stable_beta = b)))
+    # stabledist is itself flat within ~1e-4 of zeta, so compare at 1e-4
+    expect_equal(ours, stabledist::dstable(z, a, b, 1, 0, pm = 0), tolerance = 1e-4)
+  }
+})
