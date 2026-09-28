@@ -1,0 +1,151 @@
+---
+title: "Stable, GEV and GAt ARMA-APARCH models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Stable, GEV and GAt ARMA-APARCH models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(GEVStableGarch)
+```
+
+GEVStableGarch fits, simulates and forecasts ARMA-GARCH/APARCH models whose
+innovations follow a stable, GEV or GAt distribution, or any distribution you
+define. This vignette walks through the workflow with stable innovations and
+then builds a user defined distribution.
+
+## The model
+
+In the intercept form of Wuertz et al. (2006),
+
+$$x_t = \mu + \sum_{i=1}^m a_i x_{t-i} + \sum_{j=1}^n b_j e_{t-j} + e_t, \qquad e_t = \sigma_t z_t,$$
+$$\sigma_t^\delta = \omega + \sum_{i=1}^p \alpha_i (|e_{t-i}| - \gamma_i e_{t-i})^\delta + \sum_{j=1}^q \beta_j \sigma_{t-j}^\delta,$$
+
+with $z_t$ i.i.d. from the innovation distribution, standardized to location
+0 and scale 1. Stable innovations have infinite variance, so $\sigma_t$ is a
+conditional *scale*, and $E|z|^\delta$ is finite only for $\delta < \alpha$.
+In GARCH mode (`aparch = FALSE`) the power is fixed at 1 for stable
+innovations and 2 for GEV and GAt.
+
+## Stable AR(1)-APARCH(1,1)
+
+A specification says which model to fit; a model adds parameter values.
+
+```{r}
+spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), aparch = TRUE, dist = gs_stable())
+spec
+model <- gs_model(spec, mu = 0.0005, ar = 0.05, omega = 0.0002, alpha = 0.05,
+                  gamma = 0.3, beta = 0.85, delta = 1.2,
+                  dist_par = c(stable_alpha = 1.75, stable_beta = 0))
+gs_stationarity(model)
+```
+
+The persistence $\beta + \alpha\, E(|z| - \gamma z)^\delta$ is below one, so
+the model has a stationary scale level. Simulate and fit:
+
+```{r}
+x <- gs_sim(model, n = 1500, seed = 1)$y
+fit <- gs_fit(x, spec)
+fit
+```
+
+Standardized residuals and their probability integral transform under the
+fitted innovation distribution (uniform when the model is right, and the
+input of copula models):
+
+```{r}
+u <- residuals(fit, type = "pit")
+ks.test(u, "punif")$p.value
+```
+
+## Forecasting and value at risk
+
+One step ahead the forecast is exact: location, scale and quantiles of a
+shifted and scaled stable law. The value at risk at level $p$ is minus the $p$
+quantile.
+
+```{r}
+predict(fit, n_ahead = 1, level = c(0.01, 0.05))
+```
+
+Beyond one step the scale follows the APARCH recursion and the quantiles
+come from simulated paths.
+
+```{r}
+predict(fit, n_ahead = 5, level = 0.01, n_sim = 5000, seed = 2)
+```
+
+In rolling windows, start each fit from the previous estimates and skip the
+Hessian when only forecasts are needed:
+
+```{r, eval = FALSE}
+window <- 1000
+var_1 <- numeric(0); prev <- NULL
+for (t in window:(length(x) - 1)) {
+  fit_t <- gs_fit(x[(t - window + 1):t], spec, start = prev, hessian = FALSE)
+  prev <- coef(fit_t)
+  var_1 <- c(var_1, -predict(fit_t, level = 0.01)$q_0.01)
+}
+```
+
+## A user defined innovation distribution
+
+Any distribution can be plugged in with `gs_dist()`. Every field that the
+machinery needs is required, including when moments exist (`max_power`) and
+the mean (`mean`, which must return `NA` explicitly if it does not exist).
+The constructor checks the pieces against each other and stops with an error
+naming the faulty field, so a mistake cannot silently distort a fit. Here the
+normal distribution:
+
+```{r}
+norm <- gs_dist(
+  name = "norm",
+  log_density = function(z, par) dnorm(z, log = TRUE),
+  random = function(n, par) rnorm(n),
+  cdf = function(q, par) pnorm(q),
+  quantile = function(p, par) qnorm(p),
+  par_names = character(0), lower = numeric(0), upper = numeric(0), start = numeric(0),
+  default_delta = 2,
+  max_power = function(par) Inf,
+  mean = function(par) 0)
+```
+
+A wrong declaration is caught immediately:
+
+```{r, error = TRUE}
+gs_dist(
+  name = "norm",
+  log_density = function(z, par) dnorm(z, log = TRUE),
+  random = function(n, par) rnorm(n),
+  cdf = function(q, par) pnorm(q),
+  quantile = function(p, par) qnorm(p),
+  par_names = character(0), lower = numeric(0), upper = numeric(0), start = numeric(0),
+  default_delta = 2,
+  max_power = function(par) Inf,
+  mean = function(par) 0.5)
+```
+
+The new distribution gets the same fitting, stationarity and forecasting:
+
+```{r}
+spec_n <- gs_spec(garch = c(1, 1), dist = norm)
+m_n <- gs_model(spec_n, mu = 0, omega = 0.1, alpha = 0.1, beta = 0.8)
+fit_n <- gs_fit(gs_sim(m_n, n = 1000, seed = 3)$y, spec_n)
+coef(fit_n)
+predict(fit_n, n_ahead = 3, n_sim = 2000, seed = 4)
+```
+
+## References
+
+Mittnik, S., Paolella, M. S. and Rachev, S. T. (2002). Stationarity of stable
+power-GARCH processes. *Journal of Econometrics*, 106, 97-107.
+
+Paolella, M. S. (1997). Tail estimation and conditional modeling of
+heteroskedastic time series. PhD thesis, University of Kiel.
+
+Wuertz, D., Chalabi, Y. and Luksan, L. (2006). Parameter estimation of ARMA
+models with GARCH/APARCH errors: an R and SPlus software implementation.
+*Journal of Statistical Software*.

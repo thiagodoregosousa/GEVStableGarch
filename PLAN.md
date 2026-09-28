@@ -178,7 +178,21 @@ All branches are kept (`develop`, `feature/repository-organization`, `feature/or
 7. Multi step forecasting stays in Phase 5 as planned; one step is exact, multi step by simulated paths.
 8. Needs from the AR-APARCH plus vine copula VaR paper (Klin, Fiorucci, Otiniano, Maluf, Sousa) are covered: stable AR(1)-APARCH(1,1) fit with `delta` estimated, warm starts for rolling windows (`start`), one step `mu_{t+1}` and `sigma_{t+1}` from `predict`, standardized and PIT residuals for the copula step, `quantile` of the fitted innovation to map copula scenarios back to returns.
 
-## 9. Review log
+## 9. Execution status (2026-09-28)
+
+All phases 0 to 6 are done and merged into `master` (branches kept). `R CMD check`: 0 errors, 0 warnings; 54 tests, 155 expectations pass. Not done: CRAN submission (author's decision) and a vignette build on a machine with pandoc (GitHub Actions does it).
+
+Findings during execution:
+
+* **libstable4u 1.0.5 bug.** The stable density is about half its true value for points within roughly 1e-5 of `zeta = -beta tan(pi alpha / 2)` (wider for alpha near 1). Observations falling there make the log likelihood jump by about 0.6, which broke the Hessian and can bias fits. Worked around by interpolating the density in a small window around `zeta` (`.stable_pdf`); worth reporting upstream. Any earlier stable fit with `libstable4u`, including the exploratory scripts behind the VaR paper, may be affected.
+* **Stable delta bound.** Version 1.1 bounded the stable APARCH power below by 1, which is why the VaR paper reports `delta` near 1.0001. Refit those windows with the new code.
+* **fGarch equivalence.** With fGarch's own initial `h`, the likelihood equals fGarch's exactly, and `predict` equals fGarch's forecasts, for GARCH and APARCH. The default initialization `mean(|e|^delta)` is scale equivariant, fGarch's is not when `delta != 2`.
+* **Numerical Hessian.** Richardson extrapolation is too sensitive to the small roughness of numerical densities; a central difference Hessian with steps adapted to the curvature is robust for all families.
+* **GEV innovations are not centered** (`E z^2` near 2.8 for `xi = 0.1`), so GARCH persistence is much larger than `alpha + beta`; the persistence report catches it.
+* **CRAN archived version 1.1 in 2020**, so no `.Defunct()` stubs were needed.
+* Stable fit speed: about 20 s with standard errors, 3 s from a warm start (2000 observations); `libstable4u` is about 90 times faster than `stabledist`.
+
+## 10. Review log
 
 * Round 1: confirmed the bug list and the `stats::filter` equivalence with fGarch; added moment existence (`max_power`), S0 vs S1 moments, GEV location and support, Hessian strategy, fGarch cross check before simulation, libstable4u tail tests, API stubs, benchmark, licence.
 * Round 2: moved moments into Phase 1 (start values, constrained fitting and simulation depend on them); limited the S0 closed form to `beta = 0`; `max_power` enforced by penalty for every algorithm and `default_delta` per family; internal rescaling and penalty aware Hessian; pinned the fGarch comparison (initialization, scaling, tolerance); extra `gs_dist` fields (`cdf`, `quantile`, `mean`, `valid`, `start` as function); hidden release work (CITATION, data, NEWS); extra duplication (`gat.fit`, `.armaDist`, `outindex`, `abs(h)`).
