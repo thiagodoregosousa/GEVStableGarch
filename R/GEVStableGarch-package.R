@@ -7,5 +7,5 @@
 #' @keywords internal
 "_PACKAGE"
 
-#' @importFrom stats pbeta qbeta runif
+#' @importFrom stats pbeta qbeta runif coef vcov logLik nobs residuals sigma fitted
 NULL
