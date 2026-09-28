@@ -1,3 +1,40 @@
+# TODO after the 2.0.0 restructuring (2026-09-28)
+
+Details of each finding in PLAN.md section 9 and NEWS.md.
+
+## Report the libstable4u density bug upstream
+- Where: https://github.com/swihart/libstable4u/issues (maintainer Bruce Swihart, same as
+  https://github.com/swihart/stable, which is the `stable` package, not libstable4u).
+- Nobody has reported it yet. The only open issue, #6 (Dec 2025, "libstable | Wolfram Mathematica:
+  Output difference"), reports MLE estimates of alpha differing from Mathematica, without replies.
+  Our bug may be one cause of it: mention it there too.
+- Bug: libstable4u 1.0.5 `stable_pdf(x, c(alpha, beta, 1, 0), 0)` returns about half the density
+  for x within ~1e-5 of zeta = -beta*tan(pi*alpha/2); exact at zeta and beyond ~1e-4
+  (band up to ~1e-2 when alpha is close to 1). The cdf is fine (error ~1e-5).
+- Reproducible example for the issue:
+  ```r
+  a <- 1.746193; b <- -0.341291; zeta <- -b * tan(pi * a / 2)
+  z <- zeta + c(-1e-4, -1e-5, 0, 1e-5, 1e-4)
+  libstable4u::stable_pdf(z, c(a, b, 1, 0), 0L) / stabledist::dstable(z, a, b, 1, 0, pm = 0)
+  # 1.000 0.529 1.000 0.528 1.000
+  ```
+- Effect: jumps of ~0.6 in the log likelihood, broken Hessians, possibly biased MLE.
+  Workaround in the package: `.stable_pdf()` in R/dist_stable.R. Remove it once fixed upstream
+  (the test "stable density is correct next to zeta" guards it).
+
+## VaR paper (Klin, Fiorucci, Otiniano, Maluf, Sousa)
+- Refit the stable AR(1)-APARCH(1,1) windows with version 2.0.0: the old code bounded
+  delta below by 1 (hence delta ~1.0001 in Table 3) and the libstable4u bug above may
+  have distorted those fits.
+- Mean equation is now intercept form (Wuertz/fGarch): the paper's mu equals the package mu.
+- Write the estimation algorithm section (red TODOs in the paper) from the gs_fit docs.
+
+## Package
+- Push master and the phase branches to GitHub; check that GitHub Actions builds the vignette.
+- Decide on a CRAN submission (version 2.0.0).
+- Future work: stationarity constrained fitting, GAt stationarity region, formula interface or
+  model selection helper if users ask.
+
 # USING DEVTOOLS
 
 - devtools::load_all() load your package (when run inside its folder)
