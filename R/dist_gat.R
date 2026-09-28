@@ -105,40 +105,15 @@ pgat <-
       stop("Failed to verify condition:
            sd <= 0 || nu <= 0 || xi <= 0 || d <= 0")
     
-    # Define auxiliary functions
-    L <- function (z, nu = nu, d = d, xi = xi)
-    {
-        nu / ( nu + (-z*xi)^d ) # z must be negative ( <= 0 ), but we do not check it here
-    }
-    U <- function (z, nu = nu, d = d, xi = xi)
-    {
-        pw = (z/xi)^d  # z must be negative ( <= 0 ), but we do not check it here
-        return ( replace(pw / ( nu + pw ),which (pw == Inf, arr.ind = TRUE),1) )
-    } 
-
-    # Compute auxiliary variables:
+    # Both tails use w = pw / (nu + pw) with the scaled distance pw. On the negative side
+    # the upper beta tail replaces pbeta(1 - w, nu, 1/d), which loses all accuracy near 0
     z = (q - mean ) / sd
-    n = length(z)
-    arg = z
-    indexLessThanZero = which (z <= 0, arr.ind = TRUE)
-    sizeIndex = length(indexLessThanZero)
-    
-    # Compute distribution points according to their sign
-    if(sizeIndex == 0) {
-        arg = 1/(1 + xi^2 ) + 1/(1 + xi^(-2) ) * 
-            pbeta ( U (z = arg, nu = nu, d = d, xi = xi), 1/d, nu)  
-    } else if (sizeIndex == n) {
-        arg = 1/(1 + xi^2 ) * 
-            pbeta ( L (z = arg, nu = nu, d = d, xi = xi), nu, 1/d)
-    } else if (TRUE) { 
-        arg[indexLessThanZero] = 1/(1 + xi^2 ) * 
-            pbeta ( L (z = arg[indexLessThanZero], nu = nu, d = d, xi = xi), nu, 1/d)
-        arg[-indexLessThanZero] = 1/(1 + xi^2 ) + 1/(1 + xi^(-2) ) * 
-            pbeta ( U (z = arg[-indexLessThanZero], nu = nu, d = d, xi = xi), 1/d, nu) 
-    }
-    
-    # Return Value
-    arg
+    neg = z <= 0
+    pw = ifelse(neg, (-z * xi)^d, (z / xi)^d)
+    w = ifelse(is.infinite(pw), 1, pw / (nu + pw))
+    ifelse(neg,
+           1/(1 + xi^2) * pbeta(w, 1/d, nu, lower.tail = FALSE),
+           1/(1 + xi^2) + 1/(1 + xi^(-2)) * pbeta(w, 1/d, nu))
   }
 
 
@@ -199,3 +174,42 @@ rgat <-
     # Return Value:
     result
   }
+
+
+#' GAt innovations
+#'
+#' Generalized asymmetric t distribution of Paolella (1997) with location 0,
+#' scale 1 and parameters `nu` (tail), `d` (peakedness) and `xi` (asymmetry,
+#' 1 is symmetric), see [dgat()]. Moments \eqn{E|z|^\delta} exist for
+#' \eqn{\delta < \nu d}; the GARCH mode power is \eqn{\delta = 2}.
+#'
+#' @inheritParams gs_stable
+#' @return A `gs_dist` object.
+#' @examples
+#' d <- gs_gat()
+#' d$max_power(c(nu = 2, d = 4, xi = 1))
+#' @export
+gs_gat <- function(lower = c(nu = 0.05, d = 0.1, xi = 0.05),
+                   upper = c(nu = 100, d = 50, xi = 20),
+                   start = c(nu = 2, d = 4, xi = 1))
+{
+  gs_dist(
+    name = "gat",
+    log_density = function(z, par)
+      dgat(z, nu = par[["nu"]], d = par[["d"]], xi = par[["xi"]], log = TRUE),
+    random = function(n, par) rgat(n, nu = par[["nu"]], d = par[["d"]], xi = par[["xi"]]),
+    cdf = function(q, par) pgat(q, nu = par[["nu"]], d = par[["d"]], xi = par[["xi"]]),
+    quantile = function(p, par) qgat(p, nu = par[["nu"]], d = par[["d"]], xi = par[["xi"]]),
+    par_names = c("nu", "d", "xi"),
+    lower = lower, upper = upper, start = start,
+    default_delta = 2,
+    max_power = function(par) par[["nu"]] * par[["d"]],
+    mean = function(par) {
+      nu <- par[["nu"]]; d <- par[["d"]]; xi <- par[["xi"]]
+      if (nu * d <= 1) return(NA_real_)
+      (xi - 1 / xi) * nu^(1 / d) * beta(2 / d, nu - 1 / d) / beta(1 / d, nu)
+    },
+    aparch_moment = function(gamma, delta, par)
+      .gat_aparch_moment(par[["nu"]], par[["d"]], par[["xi"]], gamma, delta),
+    check = FALSE)
+}
