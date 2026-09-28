@@ -3,3 +3,6 @@
 ^dev$
 ^TODO\.md$
 ^PLAN\.md$
+^LICENSE$
+^\.github$
+^README\.md$

@@ -1,14 +1,10 @@
-citHeader("To cite GEVStableGarch in publications use:")
-
-citEntry(entry  = "Manual",
-								title  = "GEVStableGarch",
-								author = "Authors: Thiago do Rego Sousa, Cira Etheowalda Guevara Otiniano and Silvia Regina Costa Lopes",
-								year         = version$year,
-								textVersion = 
-								paste("Sousa, T.R., Otiniano, C.E.G., Lopes, S.R.C. (", version$year, ").",
-												"GEVStableGarch. Available on CRAN.", sep="")
-								)
-
-citFooter("Please, cite it when using it together with R.",
-		  "See also", sQuote("citation()"),
-		  "for citing R.")
+bibentry(
+  bibtype = "Manual",
+  title   = "{GEVStableGarch}: ARMA-GARCH/APARCH Models with Stable, GEV and GAt Innovations",
+  author  = c(person("Thiago", "do Rego Sousa"),
+              person("Cira", "Otiniano"),
+              person("Silvia", "Lopes")),
+  year    = "2026",
+  note    = paste("R package version", meta$Version),
+  url     = "https://github.com/thiagodoregosousa/GEVStableGarch"
+)

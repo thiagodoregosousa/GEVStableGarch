@@ -61,49 +61,31 @@
 #'
 #' round(qgat(pgat(q = seq(-10, 10, by = 0.5))), 6)
 #'
+#' @rdname GAT
 #' @export
 dgat <- 
   function(x, mean = 0, sd = 1, nu = 2, d = 3, xi = 1, log = FALSE)
   {   
-
-  
-    
     # Error treatment of input parameters
     if(sd <= 0  || nu <= 0 || xi <= 0 || d <= 0)
       stop("Failed to verify condition:
            sd <= 0 || nu <= 0 || xi <= 0 || d <= 0")
     
-    # Compute auxiliary variables:
+    # Scaled distance from the mode: negative side multiplied by xi, positive divided by xi
     z = (x - mean ) / sd
-    n = length(z)
-    arg = z
-    indexLessThanZero = which (z < 0, arr.ind = TRUE)
-    sizeIndex = length(indexLessThanZero)
+    arg = ifelse(z < 0, -z * xi, z / xi)
     
-    # Compute the density points according to their sign
-    # all b coefficients are >= 0
-    if(sizeIndex == 0) {
-      arg = arg / xi  
-    # all b coefficients are < 0
-    } else if (sizeIndex == n) {
-        arg = -arg * xi 
-    # default case. we have both pos. and neg. values
-    } else if (TRUE) { 
-        arg[indexLessThanZero] = -arg[indexLessThanZero] * xi
-        arg[-indexLessThanZero] = arg[-indexLessThanZero] / xi 
-    }
-    
-    # Compute density points
-    k = ( ( xi + 1/xi ) * 1/d * nu^(1/d) * beta (1/d,nu) )^(-1)
-    result = ( k * (1 + (arg^d) / nu )^( -nu-1/d) ) / sd
-    # Log:
-    if(log) result = log(result)
+    # Work on the log scale so far tails do not underflow
+    log_k = -log( ( xi + 1/xi ) * 1/d * nu^(1/d) * beta(1/d, nu) )
+    result = log_k - (nu + 1/d) * log1p(arg^d / nu) - log(sd)
+    if(!log) result = exp(result)
     
     # Return Value
     result
   }
 
 
+#' @rdname GAT
 #' @export
 pgat <- 
   function(q, mean = 0, sd = 1, nu = 2, d = 3, xi = 1)
@@ -160,6 +142,7 @@ pgat <-
   }
 
 
+#' @rdname GAT
 #' @export
 qgat <- 
   function(p, mean = 0, sd = 1, nu = 2, d = 3, xi = 1)  
@@ -204,6 +187,7 @@ qgat <-
   }
 
 
+#' @rdname GAT
 #' @export
 rgat <-  
   function(n, mean = 0, sd = 1, nu = 2, d = 3, xi = 1)  
@@ -215,73 +199,3 @@ rgat <-
     # Return Value:
     result
   }
-
-
-gat.valid.pars = function(mean, sd, nu , d, xi){
-  if(!(xi > 0) || !(d > 0) || !(nu > 0) || !(sd > 0) )
-    return(FALSE)
-  return(TRUE)
-}
-
-
-#' Estimate GAT parameters
-#'
-#' Functions to estimate all parameters of the GAT distribution from a vector
-#' of iid observations. 
-#'
-#' It optimizes the log-likelihood based on dgat data
-#' @name gat.fit
-#' @rdname gat.fit
-#' @param x Numeric vector of observations for estimating parameters.
-#' @param start (optional) starting values of parameters as c(mean,sd,nu,d,xi) 
-#' for the optimization algorithm 
-#' @param lower.bound (optional) lower bounds for the optimization algorithm 
-#' @param upper.bound (optional) lower bounds for the optimization algorithm 
-#'
-#' @return
-#' An object with the optimization output, including estimated parameters,
-#'   convergence status, objective value, and additional diagnostic information. The
-#'   optimization is performed using \code{\link[Rsolnp]{solnp}}.
-#' @author Thiago do Rego Sousa
-#'
-#' @examples
-#' # simulate random values from GAT distribution
-#' x = rgat(n = 1000, mean = 2, sd = 1, nu = 2, d = 1, xi = 3)
-#' # estimate the parameters using the observations x
-#' gat.fit(x)$pars
-#'
-#' @export
-gat.fit <- function(x, start, lower.bound, upper.bound, control = NULL)  {   
-  
-    if(missing(start)){
-      start = c(median(x),mad(x),1,1,1)
-    }
-    if(missing(lower.bound)){
-      lower.bound = c(median(x) - 2*mad(x), 0.01, 0.01, 0.01, 0.01)
-    }
-    if(missing(upper.bound)){
-      upper.bound = c(median(x) + 2*mad(x), 10, 10, 10, 10)
-    }
-    
-    llh = function(pars){
-      
-      mean = pars[1]
-      sd = pars[2]
-      nu = pars[3]
-      d  = pars[4]
-      xi = pars[5]
-
-      if(gat.valid.pars(mean,sd, nu , d, xi))   
-        return(-sum(log(dgat(x = x, mean = mean, sd = sd, nu = nu, d = d, xi = xi)))) 
-      else
-        print('here')
-        return(1e99)
-    }
-    
-    fit <- solnp(pars = start, fun = llh, 
-                  LB = lower.bound, UB = upper.bound, control = control)
-    
-    # Return Value:
-    return(fit)
-}
-
