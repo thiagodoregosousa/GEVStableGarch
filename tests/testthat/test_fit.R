@@ -21,6 +21,13 @@ test_that("normal ARMA(1,1)-APARCH(1,1) reaches at least fGarch's likelihood", {
   spec <- gs_spec(arma = c(1, 1), garch = c(1, 1), aparch = TRUE, dist = .gs_norm())
   f <- suppressWarnings(fGarch::garchFit(~arma(1, 1) + aparch(1, 1), data = x, trace = FALSE))
   g <- gs_fit(x, spec)
+  # fGarch's reported llh cannot be compared directly: it starts the recursion from
+  # omega + persistence * mean(z^2) (squares even when delta != 2), while we start from
+  # mean(|e|^delta). For delta != 2 the two starting values differ, so the two
+  # likelihoods differ slightly at the same parameters (0.07 here). Evaluating
+  # fGarch's estimates with OUR likelihood puts both on the same objective:
+  # our optimizer must reach at least that value, otherwise it stopped early.
+  # (test_likelihood.R shows the likelihoods are identical with the same start.)
   expect_gte(g$loglik, -.neg_loglik(fGarch::coef(f)[.par_names(spec)], x, spec) - 1e-6)
   expect_equal(coef(g)[c("alpha1", "beta1")], fGarch::coef(f)[c("alpha1", "beta1")], tolerance = 0.02)
   se <- sqrt(diag(vcov(g)))

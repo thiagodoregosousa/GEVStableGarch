@@ -61,7 +61,6 @@
 #'
 #' round(qgat(pgat(q = seq(-10, 10, by = 0.5))), 6)
 #'
-#' @rdname GAT
 #' @export
 dgat <- 
   function(x, mean = 0, sd = 1, nu = 2, d = 3, xi = 1, log = FALSE)
