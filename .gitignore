@@ -1,3 +1,39 @@
-.Rproj.user
+# -------------------------
+# OS / Editor Trash Files
+# -------------------------
+# macOS Finder files
+.DS_Store
+.DS_Store?
+._*
+
+# macOS crash/metadata directories
+.AppleDouble
+.LSOverride
+
+# -------------------------
+# R build files
+# -------------------------
+
+
+# -------------------------
+# testthat snapshots
+# -------------------------
+tests/testthat/_snaps/
+
+# -------------------------
+# Local exploratory data and fit outputs (scripts are tracked)
+# -------------------------
+dev/**/*.xlsx
+dev/**/*.csv
+dev/exploratory/petro_fit
+dev/exploratory/vale_fit
+dev/exploratory/fit_arma_garch_stable
+
+# -------------------------
+# R / RStudio
+# -------------------------
 .Rhistory
 .RData
+.Ruserdata
+.Rproj.user/
+*.Rproj

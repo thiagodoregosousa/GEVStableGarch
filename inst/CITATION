@@ -1,0 +1,10 @@
+bibentry(
+  bibtype = "Manual",
+  title   = "{GEVStableGarch}: ARMA-GARCH/APARCH Models with Stable, GEV and GAt Innovations",
+  author  = c(person("Thiago", "do Rego Sousa"),
+              person("Cira", "Otiniano"),
+              person("Silvia", "Lopes")),
+  year    = "2026",
+  note    = paste("R package version", meta$Version),
+  url     = "https://github.com/thiagodoregosousa/GEVStableGarch"
+)
