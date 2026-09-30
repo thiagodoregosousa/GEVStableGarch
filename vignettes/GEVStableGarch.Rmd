@@ -43,7 +43,7 @@ model <- gs_model(spec, mu = 0.0005, ar = 0.05, omega = 0.0002, alpha = 0.05,
 gs_stationarity(model)
 ```
 
-The persistence $\beta + \alpha\, E(|z| - \gamma z)^\delta$ is below one, so
+The persistence $\alpha\, E(|z| - \gamma z)^\delta + \beta$ is below one, so
 the model has a stationary scale level. Simulate and fit:
 
 ```{r}
@@ -52,11 +52,22 @@ fit <- gs_fit(x, spec)
 fit
 ```
 
-Standardized residuals and their probability integral transform under the
-fitted innovation distribution (uniform when the model is right, and the
-input of copula models):
+Three kinds of residuals are available. The raw residuals are
+$e_t = x_t - \hat\mu - \sum \hat a_i x_{t-i} - \sum \hat b_j e_{t-j}$. Dividing them by the
+fitted scale gives the standardized residuals $\hat z_t = e_t / \hat\sigma_t$, the
+estimates of the innovations: if the model is right they are i.i.d. from the
+fitted stable law, so they should show no remaining autocorrelation, in
+themselves or in their absolute values (Ljung-Box tests).
+
+Applying the fitted distribution function gives the probability integral
+transform $\hat u_t = F(\hat z_t)$. Under a correct model $\hat u_t$ is i.i.d.
+uniform on (0, 1), which gives a goodness of fit test of the innovation
+distribution (Kolmogorov-Smirnov below), and these are the pseudo observations
+that copula models take as input.
 
 ```{r}
+z <- residuals(fit, type = "standardized")
+Box.test(abs(z), lag = 20, type = "Ljung-Box")$p.value
 u <- residuals(fit, type = "pit")
 ks.test(u, "punif")$p.value
 ```
@@ -78,17 +89,31 @@ come from simulated paths.
 predict(fit, n_ahead = 5, level = 0.01, n_sim = 5000, seed = 2)
 ```
 
-In rolling windows, start each fit from the previous estimates and skip the
-Hessian when only forecasts are needed:
+A rolling window backtest evaluates one step forecasts out of sample. The
+window has a fixed length $w$. At each origin $t$ the model is fitted to the
+last $w$ observations $x_{t-w+1}, \dots, x_t$ and the one step VaR for
+$t + 1$ is computed. The window then moves forward by one: the *observed*
+value $x_{t+1}$ (not the forecast) enters on the right and $x_{t-w+1}$ leaves
+on the left, the model is refitted and the next VaR computed. Comparing each
+VaR with the observation it was made for gives the violations used in the
+Kupiec and Christoffersen tests.
+
+Consecutive windows share $w - 1$ observations, so the estimates change little
+from one origin to the next. Starting each fit from the previous estimates and
+skipping the Hessian makes each refit several times faster:
 
 ```{r, eval = FALSE}
-window <- 1000
-var_1 <- numeric(0); prev <- NULL
-for (t in window:(length(x) - 1)) {
-  fit_t <- gs_fit(x[(t - window + 1):t], spec, start = prev, hessian = FALSE)
+w <- 1000
+origins <- w:(length(x) - 1)
+var_1 <- numeric(length(origins)); prev <- NULL
+for (k in seq_along(origins)) {
+  t <- origins[k]
+  fit_t <- gs_fit(x[(t - w + 1):t], spec, start = prev, hessian = FALSE)
   prev <- coef(fit_t)
-  var_1 <- c(var_1, -predict(fit_t, level = 0.01)$q_0.01)
+  var_1[k] <- -predict(fit_t, level = 0.01)$q_0.01    # VaR for x[t + 1]
 }
+violations <- x[origins + 1] < -var_1
+mean(violations)                                      # should be close to 0.01
 ```
 
 ## A user defined innovation distribution
