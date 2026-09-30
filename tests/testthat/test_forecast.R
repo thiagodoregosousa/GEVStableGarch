@@ -14,6 +14,19 @@ test_that("mean and scale forecasts equal fGarch predict (normal GARCH and APARC
   }
 })
 
+test_that("one step value at risk equals fGarch's", {
+  skip_if_not_installed("fGarch")
+  data("dem2gbp", package = "fGarch", envir = environment())
+  x <- dem2gbp[, 1]
+  f <- fGarch::garchFit(~arma(1, 0) + garch(1, 1), data = x, trace = FALSE)
+  spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), dist = .gs_norm())
+  m <- gs_model(spec, par = fGarch::coef(f)[.par_names(spec)])
+  # beyond one step fGarch approximates the quantile by mean + q * meanError,
+  # while the true predictive law is a scale mixture, so only one step is compared
+  var_fgarch <- fGarch::predict(f, n.ahead = 1, p_loss = 0.01)$VaR
+  expect_equal(-predict(m, data = x, level = 0.01)$q_0.01, var_fgarch, tolerance = 1e-8)
+})
+
 stable_model <- function(beta = 0.3)
 {
   spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), dist = gs_stable())
