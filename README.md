@@ -19,8 +19,21 @@ Version 2.0.0 is a rewrite of the version 1.1 released on CRAN in 2015
 
 ```r
 # install.packages("remotes")
-remotes::install_github("thiagodoregosousa/GEVStableGarch", build_vignettes = TRUE)
+remotes::install_github("thiagodoregosousa/GEVStableGarch")
 ```
+
+To also build the vignette, install the suggested packages (knitr, rmarkdown,
+fGarch, ...) with `dependencies = TRUE`. Building it needs pandoc, which
+comes with RStudio:
+
+```r
+remotes::install_github("thiagodoregosousa/GEVStableGarch",
+                        dependencies = TRUE, build_vignettes = TRUE)
+vignette("GEVStableGarch", package = "GEVStableGarch")
+```
+
+The vignette source can also be read directly in
+[vignettes/GEVStableGarch.Rmd](vignettes/GEVStableGarch.Rmd).
 
 ## Usage
 
