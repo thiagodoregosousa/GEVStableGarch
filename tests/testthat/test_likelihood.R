@@ -43,7 +43,8 @@ test_that("penalties report the violated condition", {
   diag <- new.env()
   par <- c(mu = 0, omega = 0.1, alpha1 = 0.1, gamma1 = 0, beta1 = 0.8, delta = 1.8,
            stable_alpha = 1.7, stable_beta = 0)
-  expect_equal(.neg_loglik(par, x, spec, diag = diag), .PENALTY)
+  # delta (1.8) >= stable_alpha (1.7): infeasible, graded at or above .PENALTY
+  expect_gte(.neg_loglik(par, x, spec, diag = diag), .PENALTY)
   expect_match(diag$reason, "max_power")
 
   spec_gev <- gs_spec(garch = c(1, 1), dist = gs_gev())

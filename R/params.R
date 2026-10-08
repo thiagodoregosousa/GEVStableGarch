@@ -49,3 +49,20 @@
 }
 
 .ar_stationary <- function(ar) all(Mod(polyroot(c(1, -ar))) > 1)
+
+# How far outside the parameter space, as a single nonnegative number (0 when
+# admissible). Unlike `.inadmissible`, which names the first broken condition,
+# this measures the total breach so the penalty can slope back toward the
+# feasible region instead of being a flat plateau the optimizer stalls on.
+.violation <- function(u, spec)
+{
+  flat <- unlist(u[c("mu", "ar", "ma", "omega", "alpha", "gamma", "beta", "delta")])
+  if (any(!is.finite(flat))) return(1)
+  v <- max(0, -u$omega) + sum(pmax(0, -u$alpha)) + sum(pmax(0, -u$beta)) +
+       sum(pmax(0, abs(u$gamma) - 1)) + max(0, -u$delta)
+  if (length(u$ar)) v <- v + sum(pmax(0, 1 - Mod(polyroot(c(1, -u$ar)))))
+  if (!.dist_par_ok(spec$dist, u$dist_par)) v <- v + 1
+  mp <- spec$dist$max_power(u$dist_par)
+  if (is.finite(mp)) v <- v + max(0, u$delta - mp)
+  v
+}
