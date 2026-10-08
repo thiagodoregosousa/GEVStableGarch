@@ -14,6 +14,11 @@
 #'   bounds and start value.
 #' @return A `gs_dist` object.
 #' @references Nolan, J. P. (2020). Univariate Stable Distributions. Springer.
+#'
+#'   Royuela-del-Val, J., Simmross-Wattenberg, F. and Alberola-Lopez, C.
+#'   (2017). libstable: Fast, Parallel, and High-Precision Computation of
+#'   alpha-Stable Distributions in R, C/C++, and MATLAB. Journal of
+#'   Statistical Software, 78(1), 1-25.
 #' @examples
 #' d <- gs_stable()
 #' d$log_density(c(-1, 0, 1), c(stable_alpha = 1.7, stable_beta = 0.2))

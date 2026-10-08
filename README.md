@@ -93,13 +93,39 @@ Methods for fitted models: `coef()`, `vcov()`, `logLik()`, `AIC()`, `BIC()`,
   notes, legacy code of version 1.1, benchmarks, exploratory scripts)
 - `PLAN.md`: restructuring plan and decisions
 
+## Relationship to other packages
+
+GEVStableGarch builds on existing work and reuses it explicitly:
+
+- The ARMA-APARCH filter and model structure follow **fGarch** (Wuertz,
+  Chalabi and Luksan, 2006); Diethelm Wuertz is credited as contributor and
+  copyright holder in `DESCRIPTION`.
+- Maximum likelihood optimization uses **Rsolnp** (Galanos and Ye, 2025).
+- The stable density and distribution functions use **libstable4u**
+  (Royuela-del-Val, Simmross-Wattenberg and Alberola-Lopez, 2017).
+
+The package's own contribution is the pluggable innovation-distribution
+interface (`gs_dist()` / `gs_check_dist()`), the closed-form APARCH moments
+$E(|z| - \gamma z)^\delta$ for the stable, GEV and GAt families (used for
+stationarity and multi-step scale forecasting), forecasting and
+Value-at-Risk for these families, and a correction to the `libstable4u`
+density near the point $\zeta$ that otherwise destabilizes the likelihood.
+
 ## Reference
+
+Galanos, A., Ye, Y. (2025). *Rsolnp: General Non-Linear Optimization*. R
+package version 2.0.1. https://CRAN.R-project.org/package=Rsolnp
 
 Mittnik, S., Paolella, M. S., Rachev, S. T. (2002). *Stationarity of stable
 power-GARCH processes*. Journal of Econometrics, 106, 97-107.
 
 Paolella, M. S. (1997). *Tail estimation and conditional modeling of
 heteroskedastic time series*. PhD thesis, University of Kiel.
+
+Royuela-del-Val, J., Simmross-Wattenberg, F., Alberola-Lopez, C. (2017).
+*libstable: Fast, Parallel, and High-Precision Computation of alpha-Stable
+Distributions in R, C/C++, and MATLAB*. Journal of Statistical Software,
+78(1), 1-25.
 
 Wuertz, D., Chalabi, Y., Luksan, L. (2006). *Parameter Estimation of ARMA
 Models with GARCH/APARCH Errors: An R and SPlus Software Implementation*.

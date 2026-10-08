@@ -163,13 +163,32 @@ coef(fit_n)
 predict(fit_n, n_ahead = 3, n_sim = 2000, seed = 4)
 ```
 
+## Relationship to other packages
+
+This package builds on existing work. The ARMA-APARCH filter and model
+structure follow fGarch (Wuertz, Chalabi and Luksan, 2006); maximum
+likelihood optimization uses Rsolnp (Galanos and Ye, 2025); and the stable
+density uses libstable4u (Royuela-del-Val, Simmross-Wattenberg and
+Alberola-Lopez, 2017). Its own contribution is the pluggable
+innovation-distribution interface, the closed-form APARCH moments for the
+stable, GEV and GAt families, and forecasting and Value-at-Risk for these
+families.
+
 ## References
+
+Galanos, A. and Ye, Y. (2025). Rsolnp: General Non-Linear Optimization. R
+package version 2.0.1. <https://CRAN.R-project.org/package=Rsolnp>
 
 Mittnik, S., Paolella, M. S. and Rachev, S. T. (2002). Stationarity of stable
 power-GARCH processes. *Journal of Econometrics*, 106, 97-107.
 
 Paolella, M. S. (1997). Tail estimation and conditional modeling of
 heteroskedastic time series. PhD thesis, University of Kiel.
+
+Royuela-del-Val, J., Simmross-Wattenberg, F. and Alberola-Lopez, C. (2017).
+libstable: Fast, Parallel, and High-Precision Computation of alpha-Stable
+Distributions in R, C/C++, and MATLAB. *Journal of Statistical Software*,
+78(1), 1-25.
 
 Wuertz, D., Chalabi, Y. and Luksan, L. (2006). Parameter estimation of ARMA
 models with GARCH/APARCH errors: an R and SPlus software implementation.
