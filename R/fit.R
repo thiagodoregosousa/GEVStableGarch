@@ -11,6 +11,18 @@
 #' differentiation step leaves the parameter space, the affected standard
 #' errors are `NA` and a warning explains why.
 #'
+#' These Hessian standard errors are asymptotic and rely on the usual
+#' regularity conditions. They become unreliable *near* a boundary of the
+#' parameter space, even when not exactly on it: the stable tail index
+#' approaching 2 (where the skewness is no longer identified), the GEV shape
+#' approaching \eqn{\pm 0.5}, or an APARCH asymmetry approaching \eqn{\pm 1}.
+#' The GEV support depends on its shape parameter, so for GEV innovations the
+#' usual maximum likelihood confidence intervals are not guaranteed valid;
+#' prefer the parametric bootstrap of [gs_bootstrap()] there and in the
+#' near-boundary cases above. The fit records convergence diagnostics in
+#' `$diagnostics` (scaled gradient, Hessian reciprocal condition number and
+#' definiteness, optimizer iterations), which flag these situations.
+#'
 #' @param data Numeric vector, the time series (for example log returns).
 #' @param spec A `gs_spec` object.
 #' @param algorithm `"sqp"` (sequential quadratic programming via
@@ -61,29 +73,31 @@ gs_fit <- function(data, spec, algorithm = c("sqp", "nlminb"), start = NULL,
   if (.neg_loglik(par0, xs, spec, diag = diag) >= .PENALTY)
     stop("Start values are inadmissible: ", diag$reason, call. = FALSE)
 
-  # Optimize on the unit scale
+  # Optimize on the unit scale, with explicit caps so unattended runs terminate
   obj <- function(p) .neg_loglik(p, xs, spec)
   opt <- if (algorithm == "sqp") {
-    r <- Rsolnp::solnp(par0, obj, LB = bounds$lower, UB = bounds$upper,
-                       control = utils::modifyList(list(trace = 0), control))
-    list(par = r$pars, value = utils::tail(r$values, 1), convergence = r$convergence)
+    ctrl <- utils::modifyList(list(trace = 0, outer.iter = 400, inner.iter = 800), control)
+    r <- Rsolnp::solnp(par0, obj, LB = bounds$lower, UB = bounds$upper, control = ctrl)
+    list(par = r$pars, value = utils::tail(r$values, 1), convergence = r$convergence,
+         iterations = r$outer.iter, cap = ctrl$outer.iter)
   } else {
-    r <- stats::nlminb(par0, obj, lower = bounds$lower, upper = bounds$upper, control = control)
-    list(par = r$par, value = r$objective, convergence = r$convergence)
+    ctrl <- utils::modifyList(list(iter.max = 500, eval.max = 1000), control)
+    r <- stats::nlminb(par0, obj, lower = bounds$lower, upper = bounds$upper, control = ctrl)
+    list(par = r$par, value = r$objective, convergence = r$convergence,
+         iterations = r$iterations, cap = ctrl$iter.max)
   }
   par_unit <- stats::setNames(opt$par, names(par0))
   if (.neg_loglik(par_unit, xs, spec, diag = diag) >= .PENALTY)
     stop("The optimizer ended outside the parameter space: ", diag$reason, call. = FALSE)
 
-  # Estimates and covariance on the original scale
+  # Estimates, gradient/conditioning verdict and covariance on the original scale
   par <- .rescale_par(par_unit, spec, s, to_unit = FALSE)
-  vc <- matrix(NA_real_, length(par), length(par), dimnames = list(names(par), names(par)))
   at_bound <- .at_bound(par_unit, bounds)
-  if (hessian) {
-    vc_unit <- .vcov_unit(par_unit, xs, spec, at_bound)
-    J <- .rescale_jacobian(par_unit, spec, s)
-    vc <- J %*% vc_unit %*% t(J)
-  }
+  inf <- .inference(par_unit, xs, spec, at_bound, hessian)
+  vc <- if (hessian) {
+    J <- .rescale_jacobian(par_unit, spec, s); J %*% inf$vcov %*% t(J)
+  } else inf$vcov
+  cap_hit <- !is.null(opt$iterations) && !is.null(opt$cap) && opt$iterations >= opt$cap
 
   model <- gs_model(spec, par = par)
   f <- .filter_model(x, .unpack(par, spec))
@@ -91,11 +105,19 @@ gs_fit <- function(data, spec, algorithm = c("sqp", "nlminb"), start = NULL,
               loglik = -(opt$value + N * log(s)), nobs = N, data = x,
               residuals = f$e, sigma = f$sigma, h = f$h,
               persistence = gs_stationarity(model),
-              convergence = opt$convergence, algorithm = algorithm, at_bound = at_bound)
+              convergence = opt$convergence, algorithm = algorithm, at_bound = at_bound,
+              diagnostics = list(grad_max = inf$grad_max, grad_rel = inf$grad_rel,
+                                 hess_rcond = inf$hess_rcond, hess_pd = inf$hess_pd,
+                                 iterations = opt$iterations, cap_hit = cap_hit))
   class(fit) <- "gs_fit"
 
   if (opt$convergence != 0) warning("The optimizer did not report convergence (code ",
                                     opt$convergence, ").", call. = FALSE)
+  if (cap_hit) warning("The optimizer hit its iteration cap (", opt$iterations,
+                       "); the solution may not be converged.", call. = FALSE)
+  if (isTRUE(inf$grad_rel > 1e-2))
+    warning(sprintf("The gradient is not close to zero at the solution (scaled max %.1e); the optimizer may not have converged.",
+                    inf$grad_rel), call. = FALSE)
   if (fit$persistence >= 1)
     warning(sprintf("Persistence %.4f >= 1: E(sigma_t^delta) is not finite and long horizon scale forecasts diverge.",
                     fit$persistence), call. = FALSE)
@@ -111,39 +133,70 @@ gs_fit <- function(data, spec, algorithm = c("sqp", "nlminb"), start = NULL,
   names(par)[near]
 }
 
-# Covariance of the unit scale estimates from the numerical Hessian. Steps that
-# hit the penalty make the result meaningless, so they are detected and reported.
-.vcov_unit <- function(par, xs, spec, at_bound)
+# Gradient, Hessian-based covariance and conditioning of the unit scale estimates.
+# Returns the covariance (NA where a parameter is on a bound or the Hessian is
+# unusable), the scaled gradient at the solution (a first-order convergence
+# check), and the Hessian's reciprocal condition number and definiteness. Steps
+# that hit the penalty make the Hessian meaningless, so they are detected.
+.inference <- function(par, xs, spec, at_bound, hessian)
 {
   k <- length(par); nms <- names(par)
   na <- matrix(NA_real_, k, k, dimnames = list(nms, nms))
-  hits <- new.env(); hits$reason <- NULL
-  obj <- function(p) {
-    v <- .neg_loglik(p, xs, spec, diag = hits)
-    v
-  }
   free <- setdiff(nms, at_bound)
+  obj_nodiag <- function(p) .neg_loglik(p, xs, spec)
+  f0 <- obj_nodiag(par)
+
+  # Scaled gradient over the free parameters: |g_i| |par_i| / |nll|, dimensionless
+  g <- if (length(free))
+    .gradient(function(pf) { p <- par; p[free] <- pf; obj_nodiag(p) }, par[free]) else numeric(0)
+  grad_max <- if (length(g)) max(abs(g)) else 0
+  grad_rel <- if (length(g)) max(abs(g) * pmax(abs(par[free]), 1)) / max(abs(f0), 1) else 0
+  out <- list(vcov = na, grad_max = grad_max, grad_rel = grad_rel,
+              hess_rcond = NA_real_, hess_pd = NA)
+
   if (length(at_bound))
     warning("Parameter(s) at a bound, standard errors set to NA: ",
             paste(at_bound, collapse = ", "), ".", call. = FALSE)
-  if (!length(free)) return(na)
+  if (!hessian || !length(free)) return(out)
 
   # Differentiate only in the free parameters, keeping bound ones fixed
-  obj_free <- function(pf) { p <- par; p[free] <- pf; obj(p) }
+  hits <- new.env(); hits$reason <- NULL
+  obj_free <- function(pf) { p <- par; p[free] <- pf; .neg_loglik(p, xs, spec, diag = hits) }
   H <- tryCatch(.hessian(obj_free, par[free]), error = function(e) NULL)
   if (!is.null(hits$reason)) {
     warning("A differentiation step left the parameter space (", hits$reason,
             "); standard errors set to NA.", call. = FALSE)
-    return(na)
+    return(out)
+  }
+  if (!is.null(H)) {
+    ev <- tryCatch(eigen(H, symmetric = TRUE, only.values = TRUE)$values, error = function(e) NULL)
+    if (!is.null(ev)) {
+      out$hess_pd <- min(ev) > 0
+      out$hess_rcond <- min(abs(ev)) / max(abs(ev))
+    }
   }
   V <- if (is.null(H)) NULL else tryCatch(solve(H), error = function(e) NULL)
-  if (is.null(V) || any(!is.finite(V)) || any(diag(V) <= 0)) {
+  if (is.null(V) || any(!is.finite(V)) || !isTRUE(out$hess_pd)) {
     warning("The Hessian is not invertible or not positive definite; standard errors set to NA.",
             call. = FALSE)
-    return(na)
+    return(out)
   }
+  if (isTRUE(out$hess_rcond < 1e-8))
+    warning(sprintf("The Hessian is ill conditioned (reciprocal condition number %.1e); standard errors may be unreliable.",
+                    out$hess_rcond), call. = FALSE)
   na[free, free] <- V
-  na
+  out$vcov <- na
+  out
+}
+
+# Central difference gradient with a small relative step
+.gradient <- function(f, par)
+{
+  k <- length(par); h <- 1e-4 * pmax(abs(par), 1e-2)
+  vapply(seq_len(k), function(i) {
+    e <- replace(numeric(k), i, h[i])
+    (f(par + e) - f(par - e)) / (2 * h[i])
+  }, numeric(1))
 }
 
 

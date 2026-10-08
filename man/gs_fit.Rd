@@ -47,6 +47,18 @@ Standard errors come from a numerical Hessian (central differences
 with steps adapted to the curvature). When a parameter sits on a bound, or a
 differentiation step leaves the parameter space, the affected standard
 errors are \code{NA} and a warning explains why.
+
+These Hessian standard errors are asymptotic and rely on the usual
+regularity conditions. They become unreliable \emph{near} a boundary of the
+parameter space, even when not exactly on it: the stable tail index
+approaching 2 (where the skewness is no longer identified), the GEV shape
+approaching \eqn{\pm 0.5}, or an APARCH asymmetry approaching \eqn{\pm 1}.
+The GEV support depends on its shape parameter, so for GEV innovations the
+usual maximum likelihood confidence intervals are not guaranteed valid;
+prefer the parametric bootstrap of \code{\link[=gs_bootstrap]{gs_bootstrap()}} there and in the
+near-boundary cases above. The fit records convergence diagnostics in
+\verb{$diagnostics} (scaled gradient, Hessian reciprocal condition number and
+definiteness, optimizer iterations), which flag these situations.
 }
 \examples{
 \donttest{

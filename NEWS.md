@@ -19,7 +19,13 @@ so no compatibility layer is provided.
 * `gs_fit()`: maximum likelihood on internally rescaled data, `sqp` (Rsolnp)
   or `nlminb`, warm starts through `start`, optional Hessian, standard errors
   set to `NA` with a warning when a parameter is on a bound or the Hessian is
-  not usable, persistence warning.
+  not usable, persistence warning. It records convergence diagnostics in
+  `$diagnostics` (scaled gradient, Hessian reciprocal condition number and
+  definiteness, optimizer iterations) and warns when the gradient is not near
+  zero, the Hessian is ill conditioned, or the iteration cap is hit.
+* `gs_bootstrap()`: parametric bootstrap standard errors and percentile
+  confidence intervals, recommended over the Hessian errors near a boundary
+  and for GEV innovations, whose support depends on the shape parameter.
 * `gs_sim()`, `predict()`: simulation and forecasting (exact one step,
   APARCH recursion and simulated paths beyond).
 * `gs_stationarity()`, `gs_aparch_moment()`.
@@ -48,6 +54,11 @@ so no compatibility layer is provided.
   density is now interpolated in a small window around `zeta`.
 * `pgat()` kept only a few digits next to zero; it now uses the exact upper
   beta tail.
+* The out-of-bounds penalty is now graded: it adds a term proportional to the
+  size of the constraint violation (for example `delta` above the innovation
+  moment bound, or a non-stationary AR polynomial) instead of a flat constant.
+  The objective slopes back toward the feasible region, so the optimizer no
+  longer stalls on a flat plateau.
 
 ## Performance
 

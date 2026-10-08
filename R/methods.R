@@ -66,6 +66,11 @@ print.gs_fit <- function(x, ...)
   cat(sprintf("Persistence: %.4f%s\n", x$persistence,
               if (x$persistence >= 1) "  (not stationary in the sense of finite E sigma^delta)" else ""))
   if (length(x$at_bound)) cat("At a bound:", paste(x$at_bound, collapse = ", "), "\n")
+  d <- x$diagnostics
+  if (!is.null(d))
+    cat(sprintf("Convergence: scaled gradient %.1e, Hessian rcond %s%s\n",
+                d$grad_rel, if (is.na(d$hess_rcond)) "NA" else sprintf("%.1e", d$hess_rcond),
+                if (isTRUE(d$cap_hit)) ", iteration cap hit" else ""))
   invisible(x)
 }
 
