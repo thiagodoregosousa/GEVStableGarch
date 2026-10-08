@@ -13,7 +13,8 @@
 #'
 #' @param data Numeric vector, the time series (for example log returns).
 #' @param spec A `gs_spec` object.
-#' @param algorithm `"sqp"` ([Rsolnp::solnp()]) or `"nlminb"`.
+#' @param algorithm `"sqp"` (sequential quadratic programming via
+#'   [Rsolnp::solnp()], Galanos and Ye 2025) or `"nlminb"`.
 #' @param start Optional named vector of start values on the original scale,
 #'   for example `coef(previous_fit)` in rolling windows. Missing names are
 #'   filled with the default start values.
@@ -23,6 +24,9 @@
 #' @return An object of class `gs_fit` with methods [coef()], [vcov()],
 #'   [logLik()], [residuals()], [sigma()], [fitted()], [predict()] and
 #'   `print()`.
+#' @references Galanos, A. and Ye, Y. (2025). Rsolnp: General Non-Linear
+#'   Optimization. R package version 2.0.1.
+#'   \url{https://CRAN.R-project.org/package=Rsolnp}
 #' @examples
 #' \donttest{
 #' if (requireNamespace("fGarch", quietly = TRUE)) {

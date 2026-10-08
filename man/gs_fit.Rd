@@ -18,7 +18,8 @@ gs_fit(
 
 \item{spec}{A \code{gs_spec} object.}
 
-\item{algorithm}{\code{"sqp"} (\code{\link[Rsolnp:solnp]{Rsolnp::solnp()}}) or \code{"nlminb"}.}
+\item{algorithm}{\code{"sqp"} (sequential quadratic programming via
+\code{\link[Rsolnp:solnp]{Rsolnp::solnp()}}, Galanos and Ye 2025) or \code{"nlminb"}.}
 
 \item{start}{Optional named vector of start values on the original scale,
 for example \code{coef(previous_fit)} in rolling windows. Missing names are
@@ -56,4 +57,9 @@ if (requireNamespace("fGarch", quietly = TRUE)) {
   fit
 }
 }
+}
+\references{
+Galanos, A. and Ye, Y. (2025). Rsolnp: General Non-Linear
+Optimization. R package version 2.0.1.
+\url{https://CRAN.R-project.org/package=Rsolnp}
 }
