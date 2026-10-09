@@ -75,43 +75,45 @@ innovations and estimate it back.
 
 spec  <- gs_spec(garch = c(1, 1), dist = bgev_innov)
 model <- gs_model(spec, mu = 0, omega = 0.1, alpha = 0.1, beta = 0.6,
-                  dist_par = c(bgev_xi = 0.2, bgev_delta = 2))
+                  dist_par = c(bgev_xi = 0.1, bgev_delta = 4))
 gs_stationarity(model)
-#> [1] 0.7011366
+#> [1] 0.6923729
 
 x   <- gs_sim(model, n = 3000, seed = 7)$y
 fit <- gs_fit(x, spec)
 fit
 #> GARCH(1,1) with bgev innovations
 #>              Estimate Std. Error t value  Pr(>|t|)    
-#> mu         -0.0028646  0.0033386 -0.8580    0.3909    
-#> omega       0.1054548  0.0155397  6.7862 1.152e-11 ***
-#> alpha1      0.0926234  0.0110992  8.3450 < 2.2e-16 ***
-#> beta1       0.5936031  0.0515544 11.5141 < 2.2e-16 ***
-#> bgev_xi     0.2489726  0.0196169 12.6917 < 2.2e-16 ***
-#> bgev_delta  2.1015370  0.0518156 40.5580 < 2.2e-16 ***
+#> mu         -0.0025125  0.0022469 -1.1182    0.2635    
+#> omega       0.1040038  0.0184086  5.6497 1.607e-08 ***
+#> alpha1      0.0933730  0.0123417  7.5656 3.860e-14 ***
+#> beta1       0.5950794  0.0619475  9.6062 < 2.2e-16 ***
+#> bgev_xi     0.1508719  0.0204074  7.3930 1.435e-13 ***
+#> bgev_delta  4.1736280  0.0867042 48.1364 < 2.2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> Log likelihood: -955.1830   AIC: 1922.3660   BIC: 1958.4042   n = 3000
-#> Persistence: 0.6888
-#> Convergence: scaled gradient 3.6e-06, Hessian rcond 7.3e-04
+#> Log likelihood: 553.2916   AIC: -1094.5833   BIC: -1058.5451   n = 3000
+#> Persistence: 0.6822
+#> Convergence: scaled gradient 1.5e-05, Hessian rcond 2.0e-04
 ```
 
 The estimates sit close to the true values (`omega = 0.1`,
-`alpha1 = 0.1`, `beta1 = 0.6`, `bgev_xi = 0.2`, `bgev_delta = 2`).
-Forecasting and Value-at-Risk work unchanged; with a non-centered
-innovation the conditional mean uses the declared `mean`:
+`alpha1 = 0.1`, `beta1 = 0.6`, `bgev_xi = 0.1`, `bgev_delta = 4`) — note
+the shape parameters are recovered from the default start
+`(bgev_xi = 0.2, bgev_delta = 2)`, far from the truth. Forecasting and
+Value-at-Risk work unchanged; with a non-centered innovation the
+conditional mean uses the declared `mean`:
 
 ``` r
 
 predict(fit, n_ahead = 5, level = c(0.01, 0.05), n_sim = 5000, seed = 1)
 #>   horizon     location      mean mean_method     sigma     q_0.01     q_0.05
-#> 1       1 -0.002864621 0.2159210       exact 0.5707574 -0.6194076 -0.5661764
-#> 2       2           NA 0.2185650   simulated 0.5743305 -0.6243167 -0.5717010
-#> 3       3           NA 0.2188495   simulated 0.5767790 -0.6349290 -0.5698728
-#> 4       4           NA 0.2085899   simulated 0.5784595 -0.6327934 -0.5781653
-#> 5       5           NA 0.2160673   simulated 0.5796143 -0.6354478 -0.5778271
+#> 1       1 -0.002512544 0.1785613       exact 0.5685197 -0.6061889 -0.5722561
+#> 2       2           NA 0.1786121   simulated 0.5696493 -0.6062665 -0.5739388
+#> 3       3           NA 0.1782490   simulated 0.5704186 -0.6119872 -0.5738215
+#> 4       4           NA 0.1700287   simulated 0.5709428 -0.6111660 -0.5780694
+#> 5       5           NA 0.1762631   simulated 0.5713002 -0.6112368 -0.5761988
 ```
 
 And the probability integral transform of the residuals is uniform under
@@ -122,7 +124,7 @@ a correct model, which is the usual goodness-of-fit check:
 u <- residuals(fit, type = "pit")
 round(quantile(u, c(0.1, 0.5, 0.9)), 3)
 #>   10%   50%   90% 
-#> 0.099 0.490 0.898
+#> 0.100 0.491 0.898
 ```
 
 That is the whole contribution on display: the pluggable interface turns

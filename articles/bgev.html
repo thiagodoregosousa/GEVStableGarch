@@ -135,47 +135,49 @@ innovations and estimate it back.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gs_spec.html">gs_spec</a></span><span class="op">(</span>garch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>, dist <span class="op">=</span> <span class="va">bgev_innov</span><span class="op">)</span></span>
 <span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gs_model.html">gs_model</a></span><span class="op">(</span><span class="va">spec</span>, mu <span class="op">=</span> <span class="fl">0</span>, omega <span class="op">=</span> <span class="fl">0.1</span>, alpha <span class="op">=</span> <span class="fl">0.1</span>, beta <span class="op">=</span> <span class="fl">0.6</span>,</span>
-<span>                  dist_par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>bgev_xi <span class="op">=</span> <span class="fl">0.2</span>, bgev_delta <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span>                  dist_par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>bgev_xi <span class="op">=</span> <span class="fl">0.1</span>, bgev_delta <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/gs_stationarity.html">gs_stationarity</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.7011366</span></span>
+<span><span class="co">#&gt; [1] 0.6923729</span></span>
 <span></span>
 <span><span class="va">x</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gs_sim.html">gs_sim</a></span><span class="op">(</span><span class="va">model</span>, n <span class="op">=</span> <span class="fl">3000</span>, seed <span class="op">=</span> <span class="fl">7</span><span class="op">)</span><span class="op">$</span><span class="va">y</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gs_fit.html">gs_fit</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">spec</span><span class="op">)</span></span>
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; GARCH(1,1) with bgev innovations</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error t value  Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; mu         -0.0028646  0.0033386 -0.8580    0.3909    </span></span>
-<span><span class="co">#&gt; omega       0.1054548  0.0155397  6.7862 1.152e-11 ***</span></span>
-<span><span class="co">#&gt; alpha1      0.0926234  0.0110992  8.3450 &lt; 2.2e-16 ***</span></span>
-<span><span class="co">#&gt; beta1       0.5936031  0.0515544 11.5141 &lt; 2.2e-16 ***</span></span>
-<span><span class="co">#&gt; bgev_xi     0.2489726  0.0196169 12.6917 &lt; 2.2e-16 ***</span></span>
-<span><span class="co">#&gt; bgev_delta  2.1015370  0.0518156 40.5580 &lt; 2.2e-16 ***</span></span>
+<span><span class="co">#&gt; mu         -0.0025125  0.0022469 -1.1182    0.2635    </span></span>
+<span><span class="co">#&gt; omega       0.1040038  0.0184086  5.6497 1.607e-08 ***</span></span>
+<span><span class="co">#&gt; alpha1      0.0933730  0.0123417  7.5656 3.860e-14 ***</span></span>
+<span><span class="co">#&gt; beta1       0.5950794  0.0619475  9.6062 &lt; 2.2e-16 ***</span></span>
+<span><span class="co">#&gt; bgev_xi     0.1508719  0.0204074  7.3930 1.435e-13 ***</span></span>
+<span><span class="co">#&gt; bgev_delta  4.1736280  0.0867042 48.1364 &lt; 2.2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Log likelihood: -955.1830   AIC: 1922.3660   BIC: 1958.4042   n = 3000</span></span>
-<span><span class="co">#&gt; Persistence: 0.6888</span></span>
-<span><span class="co">#&gt; Convergence: scaled gradient 3.6e-06, Hessian rcond 7.3e-04</span></span></code></pre></div>
+<span><span class="co">#&gt; Log likelihood: 553.2916   AIC: -1094.5833   BIC: -1058.5451   n = 3000</span></span>
+<span><span class="co">#&gt; Persistence: 0.6822</span></span>
+<span><span class="co">#&gt; Convergence: scaled gradient 1.5e-05, Hessian rcond 2.0e-04</span></span></code></pre></div>
 <p>The estimates sit close to the true values (<code>omega = 0.1</code>,
 <code>alpha1 = 0.1</code>, <code>beta1 = 0.6</code>,
-<code>bgev_xi = 0.2</code>, <code>bgev_delta = 2</code>). Forecasting
-and Value-at-Risk work unchanged; with a non-centered innovation the
-conditional mean uses the declared <code>mean</code>:</p>
+<code>bgev_xi = 0.1</code>, <code>bgev_delta = 4</code>) — note the
+shape parameters are recovered from the default start
+<code>(bgev_xi = 0.2, bgev_delta = 2)</code>, far from the truth.
+Forecasting and Value-at-Risk work unchanged; with a non-centered
+innovation the conditional mean uses the declared <code>mean</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, n_ahead <span class="op">=</span> <span class="fl">5</span>, level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.05</span><span class="op">)</span>, n_sim <span class="op">=</span> <span class="fl">5000</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   horizon     location      mean mean_method     sigma     q_0.01     q_0.05</span></span>
-<span><span class="co">#&gt; 1       1 -0.002864621 0.2159210       exact 0.5707574 -0.6194076 -0.5661764</span></span>
-<span><span class="co">#&gt; 2       2           NA 0.2185650   simulated 0.5743305 -0.6243167 -0.5717010</span></span>
-<span><span class="co">#&gt; 3       3           NA 0.2188495   simulated 0.5767790 -0.6349290 -0.5698728</span></span>
-<span><span class="co">#&gt; 4       4           NA 0.2085899   simulated 0.5784595 -0.6327934 -0.5781653</span></span>
-<span><span class="co">#&gt; 5       5           NA 0.2160673   simulated 0.5796143 -0.6354478 -0.5778271</span></span></code></pre></div>
+<span><span class="co">#&gt; 1       1 -0.002512544 0.1785613       exact 0.5685197 -0.6061889 -0.5722561</span></span>
+<span><span class="co">#&gt; 2       2           NA 0.1786121   simulated 0.5696493 -0.6062665 -0.5739388</span></span>
+<span><span class="co">#&gt; 3       3           NA 0.1782490   simulated 0.5704186 -0.6119872 -0.5738215</span></span>
+<span><span class="co">#&gt; 4       4           NA 0.1700287   simulated 0.5709428 -0.6111660 -0.5780694</span></span>
+<span><span class="co">#&gt; 5       5           NA 0.1762631   simulated 0.5713002 -0.6112368 -0.5761988</span></span></code></pre></div>
 <p>And the probability integral transform of the residuals is uniform
 under a correct model, which is the usual goodness-of-fit check:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">u</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"pit"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">u</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   10%   50%   90% </span></span>
-<span><span class="co">#&gt; 0.099 0.490 0.898</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.100 0.491 0.898</span></span></code></pre></div>
 <p>That is the whole contribution on display: the pluggable interface
 turns any documented density — here a third party’s, reused rather than
 reimplemented — into a fully functional heavy-tailed ARMA-GARCH/APARCH
