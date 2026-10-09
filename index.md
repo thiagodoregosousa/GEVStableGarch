@@ -1,0 +1,153 @@
+# GEVStableGarch
+
+An R package for ARMA-GARCH and ARMA-APARCH models with **stable**,
+**GEV** (Generalized Extreme Value) and **GAt** (Generalized Asymmetric
+t, Paolella 1997) innovations: estimation, simulation, stationarity
+checks and forecasting (including Value-at-Risk). These three families
+are not offered by fGarch, rugarch or tsgarch. Useful for financial time
+series with volatility clustering, heavy tails and skewness.
+
+The innovation distribution is a pluggable object: a user defined
+density gets the same fitting, simulation, stationarity and forecasting
+machinery, and the constructor checks that everything it declares is
+consistent, so fitting never fails silently.
+
+Version 2.0.0 is a rewrite of the version 1.1 released on CRAN in 2015
+(archived by CRAN in 2020). The interface changed; see `NEWS.md`.
+
+## Installation
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("thiagodoregosousa/GEVStableGarch")
+```
+
+To also build the vignette, install the suggested packages (knitr,
+rmarkdown, fGarch, …) with `dependencies = TRUE`. Building it needs
+pandoc, which comes with RStudio:
+
+``` r
+
+remotes::install_github("thiagodoregosousa/GEVStableGarch",
+                        dependencies = TRUE, build_vignettes = TRUE)
+vignette("GEVStableGarch", package = "GEVStableGarch")
+```
+
+The vignette source can also be read directly in
+[vignettes/GEVStableGarch.Rmd](https://thiagodoregosousa.github.io/GEVStableGarch/vignettes/GEVStableGarch.Rmd).
+
+## Usage
+
+``` r
+
+library(GEVStableGarch)
+
+# AR(1)-APARCH(1,1) with stable innovations
+spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), aparch = TRUE, dist = gs_stable())
+
+# Simulate from known parameters, then fit
+model <- gs_model(spec, mu = 0.0005, ar = 0.05, omega = 0.0002, alpha = 0.05,
+                  gamma = 0.3, beta = 0.85, delta = 1.2,
+                  dist_par = c(stable_alpha = 1.75, stable_beta = 0))
+x <- gs_sim(model, n = 1500, seed = 1)$y
+fit <- gs_fit(x, spec)
+fit
+
+# Persistence (below 1: stationary scale level)
+gs_stationarity(fit)
+
+# One step location, scale and quantiles (VaR is minus the quantile)
+predict(fit, n_ahead = 1, level = c(0.01, 0.05))
+
+# Probability integral transform of the residuals (e.g. for copulas)
+u <- residuals(fit, type = "pit")
+```
+
+See
+[`vignette("GEVStableGarch")`](https://thiagodoregosousa.github.io/GEVStableGarch/articles/GEVStableGarch.md)
+for forecasting, rolling windows and user defined distributions.
+
+## Functions
+
+| Function | Description |
+|----|----|
+| [`gs_spec()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_spec.md) | Specifies an ARMA(m,n)-GARCH/APARCH(p,q) model and its innovation distribution |
+| [`gs_model()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_model.md) | Attaches parameter values to a specification, with admissibility checks |
+| [`gs_fit()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_fit.md) | Maximum likelihood estimation, warm starts, standard errors, stationarity report |
+| [`gs_sim()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_sim.md) | Simulates a series from a model |
+| [`predict()`](https://rdrr.io/r/stats/predict.html) | Forecasts location, mean, scale and quantiles; exact one step, simulated beyond |
+| [`gs_stationarity()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_stationarity.md) | Persistence of the APARCH recursion |
+| [`gs_aparch_moment()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_aparch_moment.md) | $`E(\|z\| - \gamma z)^\delta`$ of the innovations (closed form or numerical) |
+| [`gs_stable()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_stable.md), [`gs_gev()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_gev.md), [`gs_gat()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_gat.md) | Built in innovation distributions |
+| [`gs_dist()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_dist.md), [`gs_check_dist()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_check_dist.md) | User defined innovation distributions and their self check |
+| [`dgat()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/GAT.md), [`pgat()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/GAT.md), [`qgat()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/GAT.md), [`rgat()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/GAT.md) | Density, distribution, quantile and random generation of the GAt distribution |
+
+Methods for fitted models:
+[`coef()`](https://rdrr.io/r/stats/coef.html),
+[`vcov()`](https://rdrr.io/r/stats/vcov.html),
+[`logLik()`](https://rdrr.io/r/stats/logLik.html),
+[`AIC()`](https://rdrr.io/r/stats/AIC.html),
+[`BIC()`](https://rdrr.io/r/stats/AIC.html),
+`residuals(type = c("raw", "standardized", "pit"))`,
+[`sigma()`](https://rdrr.io/r/stats/sigma.html),
+[`fitted()`](https://rdrr.io/r/stats/fitted.values.html),
+[`print()`](https://rdrr.io/r/base/print.html).
+
+## Package layout
+
+- `R/`: package source (one file per concern: distributions, parameters,
+  filters, likelihood, fit, simulation, forecasting)
+- `tests/testthat/`: unit tests, including cross checks against fGarch
+- `vignettes/`: worked example
+- `dev/`: development material excluded from the build (restructuring
+  plan notes, legacy code of version 1.1, benchmarks, exploratory
+  scripts)
+- `PLAN.md`: restructuring plan and decisions
+
+## Relationship to other packages
+
+GEVStableGarch builds on existing work and reuses it explicitly:
+
+- The ARMA-APARCH filter and model structure follow **fGarch** (Wuertz,
+  Chalabi and Luksan, 2006); Diethelm Wuertz is credited as contributor
+  and copyright holder in `DESCRIPTION`.
+- Maximum likelihood optimization uses **Rsolnp** (Galanos and Ye,
+  2025).
+- The stable density and distribution functions use **libstable4u**
+  (Royuela-del-Val, Simmross-Wattenberg and Alberola-Lopez, 2017).
+
+The package’s own contribution is the pluggable innovation-distribution
+interface
+([`gs_dist()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_dist.md)
+/
+[`gs_check_dist()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_check_dist.md)),
+the closed-form APARCH moments $`E(|z| - \gamma z)^\delta`$ for the
+stable, GEV and GAt families (used for stationarity and multi-step scale
+forecasting), forecasting and Value-at-Risk for these families, and a
+correction to the `libstable4u` density near the point $`\zeta`$ that
+otherwise destabilizes the likelihood.
+
+## Reference
+
+Galanos, A., Ye, Y. (2025). *Rsolnp: General Non-Linear Optimization*. R
+package version 2.0.1. <https://CRAN.R-project.org/package=Rsolnp>
+
+Mittnik, S., Paolella, M. S., Rachev, S. T. (2002). *Stationarity of
+stable power-GARCH processes*. Journal of Econometrics, 106, 97-107.
+
+Paolella, M. S. (1997). *Tail estimation and conditional modeling of
+heteroskedastic time series*. PhD thesis, University of Kiel.
+
+Royuela-del-Val, J., Simmross-Wattenberg, F., Alberola-Lopez, C. (2017).
+*libstable: Fast, Parallel, and High-Precision Computation of
+alpha-Stable Distributions in R, C/C++, and MATLAB*. Journal of
+Statistical Software, 78(1), 1-25.
+
+Wuertz, D., Chalabi, Y., Luksan, L. (2006). *Parameter Estimation of
+ARMA Models with GARCH/APARCH Errors: An R and SPlus Software
+Implementation*. Journal of Statistical Software.
+
+Zhao, X., Scarrott, C.J., Oxley, L., Reale, M. (2011). *GARCH dependence
+in extreme value models with Bayesian inference*. Mathematics and
+Computers in Simulation, 81(7), 1430-1440.
