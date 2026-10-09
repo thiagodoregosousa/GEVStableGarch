@@ -17,6 +17,8 @@ args  <- commandArgs(trailingOnly = TRUE)
 R_    <- if (length(args) >= 1) as.integer(args[1]) else 100L
 cores <- if (length(args) >= 2) as.integer(args[2]) else 5L
 n_    <- if (length(args) >= 3) as.integer(args[3]) else 2500L
+only  <- if (length(args) >= 4) args[4] else "all"   # "all", "gev" or "stable"
+restarts <- if (length(args) >= 5) as.integer(args[5]) else 0L
 
 if (requireNamespace("GEVStableGarch", quietly = TRUE)) {
   library(GEVStableGarch)
@@ -29,16 +31,19 @@ source("dgp.R"); source("run_mc.R"); source("summarise.R")
 
 baseline <- mc_load_baseline("baseline_2012_thesis.csv")
 dgps     <- mc_dgps(baseline)
+if (only != "all") dgps <- Filter(function(d) d$dist == only, dgps)
 
-cat(sprintf("Part A: %d cells, R = %d, n = %d, cores = %d\n\n",
-            length(dgps), R_, n_, cores))
+cat(sprintf("Part A (%s): %d cells, R = %d, n = %d, cores = %d\n\n",
+            only, length(dgps), R_, n_, cores))
 t0 <- Sys.time()
-results <- mc_run_all(dgps, n = n_, R = R_, base_seed = 1000, hessian = FALSE, cores = cores)
+results <- mc_run_all(dgps, n = n_, R = R_, base_seed = 1000, hessian = FALSE,
+                      cores = cores, restarts = restarts)
 cat(sprintf("\nDone in %.1f min.\n\n", as.numeric(difftime(Sys.time(), t0, units = "mins"))))
 
 out_dir <- "../../mc/results"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-tag <- sprintf("partA_R%d_n%d", R_, n_)
+tag <- sprintf("partA_R%d_n%d%s%s", R_, n_, if (only == "all") "" else paste0("_", only),
+               if (restarts > 0) paste0("_rs", restarts) else "")
 saveRDS(results, file.path(out_dir, paste0(tag, "_raw.rds")))
 
 summary_tab <- mc_summarise(results)
