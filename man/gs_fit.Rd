@@ -10,6 +10,7 @@ gs_fit(
   algorithm = c("sqp", "nlminb"),
   start = NULL,
   hessian = TRUE,
+  restarts = 0L,
   control = list()
 )
 }
@@ -27,6 +28,13 @@ filled with the default start values.}
 
 \item{hessian}{Logical, compute standard errors. Set \code{FALSE} to save time
 when only point estimates are needed.}
+
+\item{restarts}{Integer, number of additional optimizer runs from perturbed
+start values; the fit with the highest log likelihood is kept. A few
+restarts (for example 3 to 5) make the estimate robust to the local optima
+of multimodal surfaces, such as ARMA-GARCH models with heavy-tailed
+innovations, at a proportional increase in time. The default 0 keeps the
+single run from the data-driven start.}
 
 \item{control}{List passed to the optimizer.}
 }

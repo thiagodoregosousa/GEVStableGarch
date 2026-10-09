@@ -7,7 +7,7 @@
 
 # One replication: simulate a series from the cell's model, fit it, and return a
 # tidy data frame with one row per parameter plus the Phase 1 diagnostics.
-mc_fit_once <- function(cell, n, seed, hessian = FALSE) {
+mc_fit_once <- function(cell, n, seed, hessian = FALSE, restarts = 0L) {
   nms <- names(cell$true)
   fail <- function(msg, elapsed = NA_real_)
     data.frame(cell = cell$cell, table = cell$table, param_set = cell$param_set,
@@ -19,7 +19,7 @@ mc_fit_once <- function(cell, n, seed, hessian = FALSE) {
   res <- tryCatch({
     t <- system.time({
       y <- suppressWarnings(gs_sim(cell$model, n = n, seed = seed)$y)
-      f <- suppressWarnings(gs_fit(y, cell$spec, hessian = hessian))
+      f <- suppressWarnings(gs_fit(y, cell$spec, hessian = hessian, restarts = restarts))
     })
     list(f = f, elapsed = unname(t[3]))
   }, error = function(e) e)
@@ -38,24 +38,24 @@ mc_fit_once <- function(cell, n, seed, hessian = FALSE) {
 
 # All R replications of one cell, in parallel.
 mc_run_cell <- function(cell, n = 2500, R = 100, base_seed = 1000,
-                        hessian = FALSE, cores = 5) {
+                        hessian = FALSE, cores = 5, restarts = 0L) {
   cores <- max(1, min(cores, parallel::detectCores()))
   reps <- parallel::mclapply(seq_len(R),
-    function(r) mc_fit_once(cell, n, seed = base_seed + r, hessian = hessian),
+    function(r) mc_fit_once(cell, n, seed = base_seed + r, hessian = hessian, restarts = restarts),
     mc.cores = cores)
   bad <- vapply(reps, function(x) inherits(x, "try-error") || !is.data.frame(x), logical(1))
   if (any(bad)) reps[bad] <- lapply(which(bad), function(i)
-    mc_fit_once(cell, n, seed = base_seed + i, hessian = hessian))  # serial retry
+    mc_fit_once(cell, n, seed = base_seed + i, hessian = hessian, restarts = restarts))  # serial retry
   do.call(rbind, reps)
 }
 
 # Every cell, with a one-line progress report per cell.
 mc_run_all <- function(dgps, n = 2500, R = 100, base_seed = 1000,
-                       hessian = FALSE, cores = 5, verbose = TRUE) {
+                       hessian = FALSE, cores = 5, restarts = 0L, verbose = TRUE) {
   out <- vector("list", length(dgps))
   for (i in seq_along(dgps)) {
     if (verbose) cat(sprintf("[%2d/%2d] %-14s ", i, length(dgps), dgps[[i]]$cell))
-    tt <- system.time(out[[i]] <- mc_run_cell(dgps[[i]], n, R, base_seed, hessian, cores))
+    tt <- system.time(out[[i]] <- mc_run_cell(dgps[[i]], n, R, base_seed, hessian, cores, restarts))
     if (verbose) {
       df <- out[[i]]; cr <- mean(df$converged[df$param == df$param[1]])
       cat(sprintf("%5.0fs  conv %3.0f%%\n", tt[3], 100 * cr))

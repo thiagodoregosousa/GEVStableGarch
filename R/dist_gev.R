@@ -47,7 +47,37 @@ gs_gev <- function(lower = c(xi = -0.49), upper = c(xi = 0.49), start = c(xi = 0
       if (xi >= 1) return(NA_real_)
       (gamma(1 - xi) - 1) / xi
     },
+    start_fun = function(z) .gev_start_lmom(z, lower[["xi"]], upper[["xi"]]),
     check = FALSE)
+}
+
+# Shape start from the sample L-skewness (Hosking's probability weighted moment
+# estimator for the GEV). L-skewness is location and scale free, so it works on
+# the standardized data, and unlike a fixed start it has the right sign for
+# xi < 0. Hosking's k equals -xi in the convention used here.
+.gev_start_lmom <- function(z, lo, hi)
+{
+  x <- sort(z); n <- length(x); i <- seq_len(n)
+  default <- c(xi = 0.01)
+  if (n < 4) return(default)
+  b0 <- mean(x)
+  b1 <- sum((i - 1) / (n - 1) * x) / n
+  b2 <- sum((i - 1) * (i - 2) / ((n - 1) * (n - 2)) * x) / n
+  l2 <- 2 * b1 - b0
+  l3 <- 6 * b2 - 6 * b1 + b0
+  if (!is.finite(l2) || l2 <= 0) return(default)
+  t3 <- l3 / l2
+  cc <- 2 / (3 + t3) - log(2) / log(3)
+  k <- 7.8590 * cc + 2.9554 * cc^2
+  xi <- -k
+  if (!is.finite(xi)) return(default)
+  xi <- min(max(xi, lo + 0.01), hi - 0.01)
+  # Keep the standardized data inside the GEV support (1 + xi z > 0) at the
+  # start, with a margin, so the starting log density is finite.
+  mn <- min(x); mx <- max(x)
+  if (xi > 0 && mn < 0) xi <- min(xi, 0.8 / (-mn))
+  if (xi < 0 && mx > 0) xi <- max(xi, -0.8 / mx)
+  c(xi = xi)
 }
 
 .gev_quantile <- function(p, xi)

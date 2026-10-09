@@ -32,6 +32,12 @@
 #'   filled with the default start values.
 #' @param hessian Logical, compute standard errors. Set `FALSE` to save time
 #'   when only point estimates are needed.
+#' @param restarts Integer, number of additional optimizer runs from perturbed
+#'   start values; the fit with the highest log likelihood is kept. A few
+#'   restarts (for example 3 to 5) make the estimate robust to the local optima
+#'   of multimodal surfaces, such as ARMA-GARCH models with heavy-tailed
+#'   innovations, at a proportional increase in time. The default 0 keeps the
+#'   single run from the data-driven start.
 #' @param control List passed to the optimizer.
 #' @return An object of class `gs_fit` with methods [coef()], [vcov()],
 #'   [logLik()], [residuals()], [sigma()], [fitted()], [predict()] and
@@ -50,7 +56,7 @@
 #' }
 #' @export
 gs_fit <- function(data, spec, algorithm = c("sqp", "nlminb"), start = NULL,
-                   hessian = TRUE, control = list())
+                   hessian = TRUE, restarts = 0L, control = list())
 {
   algorithm <- match.arg(algorithm)
   if (!inherits(spec, "gs_spec")) stop("`spec` must be a gs_spec object.", call. = FALSE)
@@ -73,18 +79,18 @@ gs_fit <- function(data, spec, algorithm = c("sqp", "nlminb"), start = NULL,
   if (.neg_loglik(par0, xs, spec, diag = diag) >= .PENALTY)
     stop("Start values are inadmissible: ", diag$reason, call. = FALSE)
 
-  # Optimize on the unit scale, with explicit caps so unattended runs terminate
+  # Optimize on the unit scale, with explicit caps so unattended runs terminate.
+  # With `restarts > 0`, re-optimize from perturbed start values and keep the
+  # best log likelihood, to escape the local optima of multimodal surfaces
+  # (for example ARMA-GARCH with heavy-tailed innovations).
   obj <- function(p) .neg_loglik(p, xs, spec)
-  opt <- if (algorithm == "sqp") {
-    ctrl <- utils::modifyList(list(trace = 0, outer.iter = 400, inner.iter = 800), control)
-    r <- Rsolnp::solnp(par0, obj, LB = bounds$lower, UB = bounds$upper, control = ctrl)
-    list(par = r$pars, value = utils::tail(r$values, 1), convergence = r$convergence,
-         iterations = r$outer.iter, cap = ctrl$outer.iter)
-  } else {
-    ctrl <- utils::modifyList(list(iter.max = 500, eval.max = 1000), control)
-    r <- stats::nlminb(par0, obj, lower = bounds$lower, upper = bounds$upper, control = ctrl)
-    list(par = r$par, value = r$objective, convergence = r$convergence,
-         iterations = r$iterations, cap = ctrl$iter.max)
+  opt <- .optimize_once(par0, obj, bounds, algorithm, control)
+  for (r in seq_len(restarts)) {
+    start_r <- .perturb_start(par0, bounds)
+    if (.neg_loglik(start_r, xs, spec) >= .PENALTY) next
+    opt_r <- tryCatch(.optimize_once(start_r, obj, bounds, algorithm, control),
+                      error = function(e) NULL)
+    if (!is.null(opt_r) && is.finite(opt_r$value) && opt_r$value < opt$value) opt <- opt_r
   }
   par_unit <- stats::setNames(opt$par, names(par0))
   if (.neg_loglik(par_unit, xs, spec, diag = diag) >= .PENALTY)
@@ -124,6 +130,31 @@ gs_fit <- function(data, spec, algorithm = c("sqp", "nlminb"), start = NULL,
   fit
 }
 
+
+# One optimizer run from a given (unit scale) start, returning a common result shape
+.optimize_once <- function(par_start, obj, bounds, algorithm, control)
+{
+  if (algorithm == "sqp") {
+    ctrl <- utils::modifyList(list(trace = 0, outer.iter = 400, inner.iter = 800), control)
+    r <- Rsolnp::solnp(par_start, obj, LB = bounds$lower, UB = bounds$upper, control = ctrl)
+    list(par = r$pars, value = utils::tail(r$values, 1), convergence = r$convergence,
+         iterations = r$outer.iter, cap = ctrl$outer.iter)
+  } else {
+    ctrl <- utils::modifyList(list(iter.max = 500, eval.max = 1000), control)
+    r <- stats::nlminb(par_start, obj, lower = bounds$lower, upper = bounds$upper, control = ctrl)
+    list(par = r$par, value = r$objective, convergence = r$convergence,
+         iterations = r$iterations, cap = ctrl$iter.max)
+  }
+}
+
+# A jittered start for a restart: each coordinate perturbed by about `sd` of its
+# magnitude (or of the box width when near zero), kept strictly inside the box.
+.perturb_start <- function(par0, bounds, sd = 0.3)
+{
+  width <- bounds$upper - bounds$lower
+  step <- stats::rnorm(length(par0), 0, sd) * pmax(abs(par0), 0.05 * width)
+  .clamp(par0 + step, bounds)
+}
 
 # Parameters closer to a bound than a small fraction of the interval width
 .at_bound <- function(par, bounds, tol = 1e-4)

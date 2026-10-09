@@ -71,7 +71,9 @@ test_that("gs_bootstrap returns standard errors and intervals of the right shape
   model <- gs_model(spec, mu = 0, omega = 0.1, alpha = 0.07, beta = 0.6, dist_par = c(xi = 0.2))
   x <- gs_sim(model, n = 600, seed = 1)$y
   fit <- gs_fit(x, spec, hessian = FALSE)
-  b <- gs_bootstrap(fit, n_boot = 20, seed = 1)
+  # an occasional bootstrap refit may fail and be dropped (warned); that is the
+  # documented behaviour and is asserted through n_fail below.
+  b <- suppressWarnings(gs_bootstrap(fit, n_boot = 20, seed = 1))
   expect_named(b$se, names(coef(fit)))
   expect_true(all(b$se > 0))
   expect_equal(dim(b$ci), c(length(coef(fit)), 2))
