@@ -76,8 +76,16 @@ gs_fit <- function(data, spec, algorithm = c("sqp", "nlminb"), start = NULL,
     par0 <- .clamp(.rescale_par(full, spec, s, to_unit = TRUE), bounds)
   }
   diag <- new.env()
-  if (.neg_loglik(par0, xs, spec, diag = diag) >= .PENALTY)
-    stop("Start values are inadmissible: ", diag$reason, call. = FALSE)
+  if (.neg_loglik(par0, xs, spec, diag = diag) >= .PENALTY) {
+    # A bounded-support innovation (for example GEV with a large shape, or a
+    # user distribution) can leave the data outside the support when the
+    # starting scale is too small. Enlarge omega toward its bound before failing.
+    cap <- bounds$upper[["omega"]] * (1 - 1e-4)
+    while (par0[["omega"]] < cap && .neg_loglik(par0, xs, spec, diag = diag) >= .PENALTY)
+      par0["omega"] <- min(par0[["omega"]] * 3, cap)
+    if (.neg_loglik(par0, xs, spec, diag = diag) >= .PENALTY)
+      stop("Start values are inadmissible: ", diag$reason, call. = FALSE)
+  }
 
   # Optimize on the unit scale, with explicit caps so unattended runs terminate.
   # With `restarts > 0`, re-optimize from perturbed start values and keep the

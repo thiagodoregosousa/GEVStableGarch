@@ -1,0 +1,11 @@
+url: https://thiagodoregosousa.github.io/GEVStableGarch
+
+template:
+  bootstrap: 5
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - GEVStableGarch
+  - bgev

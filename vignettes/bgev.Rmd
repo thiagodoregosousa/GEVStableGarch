@@ -1,0 +1,118 @@
+---
+title: "A new innovation distribution: bimodal GEV from the bgev package"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A new innovation distribution: bimodal GEV from the bgev package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+has_bgev <- requireNamespace("bgev", quietly = TRUE)
+knitr::opts_chunk$set(eval = has_bgev)
+library(GEVStableGarch)
+```
+
+The built-in innovations (stable, GEV, GAt) are created with the same
+constructor, `gs_dist()`, that is offered to users. This vignette shows the
+point of that design: a distribution from **another CRAN package** is dropped
+in as the innovation of an ARMA-GARCH/APARCH model and immediately gets the full
+machinery — estimation, simulation, stationarity and forecasting — with no
+changes to the package.
+
+We use the **bimodal GEV** (BGEV) of Otiniano, Oliveira, Vila and Dias (2025),
+provided by the CRAN package [`bgev`](https://CRAN.R-project.org/package=bgev).
+It extends the GEV with a second shape parameter `delta` that reshapes the body
+and the tail.
+
+```{r check-bgev, eval = !has_bgev, echo = FALSE, results = "asis"}
+cat("> The `bgev` package is not installed, so the code below is shown but not run.\n")
+```
+
+## Wrapping bgev as an innovation distribution
+
+An innovation is standardized to location 0 and scale 1; the conditional scale
+`sigma_t` of the model carries the scale. So we fix bgev's `mu = 0`, `sigma = 1`
+and expose its two shape parameters. The only bookkeeping:
+
+* bgev's second shape is called `delta`, which would clash with the APARCH power
+  `delta`, so we rename the innovation parameters `bgev_xi` and `bgev_delta`;
+* `max_power` must say where moments stop existing. The BGEV paper (Remark 1)
+  gives, for `xi > 0`, `E|z|^k < Inf` if and only if `k < (delta + 1) / xi`;
+* `mean` must return `E[z]`. BGEV is not centered, exactly like the built-in
+  GEV, and the machinery accounts for it; we compute the mean numerically.
+
+```{r build}
+bgev_mean <- function(xi, delta)
+  integrate(function(p) bgev::qbgev(p, 0, 1, xi, delta), 0, 1,
+            subdivisions = 400L, rel.tol = 1e-6)$value
+
+bgev_innov <- gs_dist(
+  name = "bgev",
+  log_density = function(z, par) {
+    d <- bgev::dbgev(z, 0, 1, par[["bgev_xi"]], par[["bgev_delta"]])
+    ifelse(d > 0, log(d), -Inf)
+  },
+  random   = function(n, par) bgev::rbgev(n, 0, 1, par[["bgev_xi"]], par[["bgev_delta"]]),
+  cdf      = function(q, par) bgev::pbgev(q, 0, 1, par[["bgev_xi"]], par[["bgev_delta"]]),
+  quantile = function(p, par) bgev::qbgev(p, 0, 1, par[["bgev_xi"]], par[["bgev_delta"]]),
+  par_names = c("bgev_xi", "bgev_delta"),
+  lower = c(bgev_xi = 0.02, bgev_delta = 0.5),
+  upper = c(bgev_xi = 0.45, bgev_delta = 5),
+  start = c(bgev_xi = 0.20, bgev_delta = 2),
+  default_delta = 2,                                   # GARCH mode: variance recursion
+  max_power = function(par) (par[["bgev_delta"]] + 1) / par[["bgev_xi"]],
+  mean = function(par) bgev_mean(par[["bgev_xi"]], par[["bgev_delta"]]))
+```
+
+The constructor runs a self-check so that a distribution that declares something
+inconsistent (densities that do not integrate to one, a wrong `max_power`,
+a `quantile` that does not invert the `cdf`, ...) fails loudly rather than
+silently biasing the fit:
+
+```{r check}
+gs_check_dist(bgev_innov)
+```
+
+## Fit, simulate, forecast
+
+From here it is an ordinary model. We simulate a GARCH(1,1) with BGEV
+innovations and estimate it back.
+
+```{r fit}
+spec  <- gs_spec(garch = c(1, 1), dist = bgev_innov)
+model <- gs_model(spec, mu = 0, omega = 0.1, alpha = 0.1, beta = 0.6,
+                  dist_par = c(bgev_xi = 0.2, bgev_delta = 2))
+gs_stationarity(model)
+
+x   <- gs_sim(model, n = 3000, seed = 7)$y
+fit <- gs_fit(x, spec)
+fit
+```
+
+The estimates sit close to the true values
+(`omega = 0.1`, `alpha1 = 0.1`, `beta1 = 0.6`, `bgev_xi = 0.2`,
+`bgev_delta = 2`). Forecasting and Value-at-Risk work unchanged; with a
+non-centered innovation the conditional mean uses the declared `mean`:
+
+```{r forecast}
+predict(fit, n_ahead = 5, level = c(0.01, 0.05), n_sim = 5000, seed = 1)
+```
+
+And the probability integral transform of the residuals is uniform under a
+correct model, which is the usual goodness-of-fit check:
+
+```{r pit}
+u <- residuals(fit, type = "pit")
+round(quantile(u, c(0.1, 0.5, 0.9)), 3)
+```
+
+That is the whole contribution on display: the pluggable interface turns any
+documented density — here a third party's, reused rather than reimplemented —
+into a fully functional heavy-tailed ARMA-GARCH/APARCH model.
+
+## Reference
+
+Otiniano, C. E. G., Oliveira, B. S., Vila, R., Dias, M. (2025). *The bimodal
+GEV distribution*. (CRAN package `bgev`.)
