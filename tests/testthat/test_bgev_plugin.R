@@ -46,13 +46,14 @@ test_that("GARCH(1,1) with bgev innovations fits from the default start and reco
   skip_on_cran()
   skip_if_not_installed("bgev")
   spec <- gs_spec(garch = c(1, 1), dist = bgev_dist())
-  truth <- c(mu = 0, omega = 0.1, alpha1 = 0.1, beta1 = 0.6, bgev_xi = 0.2, bgev_delta = 2)
+  # shape far from the default start (bgev_xi = 0.2, bgev_delta = 2)
+  truth <- c(mu = 0, omega = 0.1, alpha1 = 0.1, beta1 = 0.6, bgev_xi = 0.1, bgev_delta = 4)
   model <- gs_model(spec, mu = 0, omega = 0.1, alpha = 0.1, beta = 0.6,
-                    dist_par = c(bgev_xi = 0.2, bgev_delta = 2))
+                    dist_par = c(bgev_xi = 0.1, bgev_delta = 4))
   x <- gs_sim(model, n = 3000, seed = 7)$y
   fit <- suppressWarnings(gs_fit(x, spec, hessian = FALSE))   # default start: rescued automatically
   expect_equal(fit$convergence, 0)
   expect_equal(coef(fit)[c("alpha1", "beta1")], truth[c("alpha1", "beta1")], tolerance = 0.15)
-  expect_lt(abs(coef(fit)[["bgev_xi"]] - 0.2), 0.1)
-  expect_lt(abs(coef(fit)[["bgev_delta"]] - 2), 0.7)
+  expect_lt(abs(coef(fit)[["bgev_xi"]] - 0.1), 0.1)
+  expect_lt(abs(coef(fit)[["bgev_delta"]] - 4), 0.7)
 })

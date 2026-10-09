@@ -83,7 +83,7 @@ innovations and estimate it back.
 ```{r fit}
 spec  <- gs_spec(garch = c(1, 1), dist = bgev_innov)
 model <- gs_model(spec, mu = 0, omega = 0.1, alpha = 0.1, beta = 0.6,
-                  dist_par = c(bgev_xi = 0.2, bgev_delta = 2))
+                  dist_par = c(bgev_xi = 0.1, bgev_delta = 4))
 gs_stationarity(model)
 
 x   <- gs_sim(model, n = 3000, seed = 7)$y
@@ -92,9 +92,11 @@ fit
 ```
 
 The estimates sit close to the true values
-(`omega = 0.1`, `alpha1 = 0.1`, `beta1 = 0.6`, `bgev_xi = 0.2`,
-`bgev_delta = 2`). Forecasting and Value-at-Risk work unchanged; with a
-non-centered innovation the conditional mean uses the declared `mean`:
+(`omega = 0.1`, `alpha1 = 0.1`, `beta1 = 0.6`, `bgev_xi = 0.1`,
+`bgev_delta = 4`) — note the shape parameters are recovered from the default
+start `(bgev_xi = 0.2, bgev_delta = 2)`, far from the truth. Forecasting and
+Value-at-Risk work unchanged; with a non-centered innovation the conditional
+mean uses the declared `mean`:
 
 ```{r forecast}
 predict(fit, n_ahead = 5, level = c(0.01, 0.05), n_sim = 5000, seed = 1)
