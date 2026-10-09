@@ -22,6 +22,29 @@ mc_summarise <- function(results) {
   out[order(out$table, out$param_set, out$param), ]
 }
 
+# Per (cell, parameter, n): RMSE, bias, mean Hessian SE, empirical SD and the
+# 95% Wald coverage (fraction of converged fits whose 95% interval covers the
+# truth). Requires an `n` column and the `se` column from a hessian = TRUE run.
+mc_coverage <- function(results) {
+  parts <- split(results, list(results$cell, results$param, results$n), drop = TRUE)
+  rows <- lapply(parts, function(df) {
+    conv <- df[df$converged & !is.na(df$estimate), ]
+    est <- conv$estimate; se <- conv$se; true <- df$true[1]; has <- is.finite(se)
+    data.frame(cell = df$cell[1], table = df$table[1], param_set = df$param_set[1],
+               param = df$param[1], n = df$n[1], true = true, n_conv = nrow(conv),
+               rmse = if (nrow(conv)) sqrt(mean((est - true)^2)) else NA_real_,
+               bias = if (nrow(conv)) mean(est) - true else NA_real_,
+               mean_se = if (any(has)) mean(se[has]) else NA_real_,
+               emp_sd = if (nrow(conv) > 1) stats::sd(est) else NA_real_,
+               se_rate = mean(has),
+               coverage95 = if (any(has))
+                 mean(abs(est[has] - true) <= stats::qnorm(0.975) * se[has]) else NA_real_,
+               stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, rows)
+  out[order(out$cell, out$param, out$n), ]
+}
+
 # Join the 2012 RMSE and flag non-degradation. Stable location parameters
 # (mu, omega) are marked because they are only comparable if the thesis used the
 # S0 parametrization (see MC_PLAN.md caveat 2); they do not count toward the gate.

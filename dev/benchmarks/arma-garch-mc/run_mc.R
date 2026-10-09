@@ -11,8 +11,8 @@ mc_fit_once <- function(cell, n, seed, hessian = FALSE, restarts = 0L) {
   nms <- names(cell$true)
   fail <- function(msg, elapsed = NA_real_)
     data.frame(cell = cell$cell, table = cell$table, param_set = cell$param_set,
-               param = nms, true = unname(cell$true), estimate = NA_real_, seed = seed,
-               converged = FALSE, grad_rel = NA_real_, hess_rcond = NA_real_,
+               param = nms, true = unname(cell$true), estimate = NA_real_, se = NA_real_,
+               seed = seed, converged = FALSE, grad_rel = NA_real_, hess_rcond = NA_real_,
                iterations = NA_real_, n_at_bound = NA_integer_, persistence = NA_real_,
                elapsed = elapsed, error = msg, stringsAsFactors = FALSE)
 
@@ -27,9 +27,10 @@ mc_fit_once <- function(cell, n, seed, hessian = FALSE, restarts = 0L) {
   if (inherits(res, "error")) return(fail(conditionMessage(res)))
   f <- res$f; dg <- f$diagnostics
   ok <- (f$convergence == 0) && !isTRUE(dg$cap_hit) && isTRUE(dg$grad_rel < 1e-2)
+  se <- if (hessian) suppressWarnings(sqrt(diag(f$vcov))[nms]) else rep(NA_real_, length(nms))
   data.frame(cell = cell$cell, table = cell$table, param_set = cell$param_set,
              param = nms, true = unname(cell$true), estimate = unname(coef(f)[nms]),
-             seed = seed, converged = ok, grad_rel = dg$grad_rel,
+             se = unname(se), seed = seed, converged = ok, grad_rel = dg$grad_rel,
              hess_rcond = if (is.null(dg$hess_rcond)) NA_real_ else dg$hess_rcond,
              iterations = if (is.null(dg$iterations)) NA_real_ else dg$iterations,
              n_at_bound = length(f$at_bound), persistence = f$persistence,
