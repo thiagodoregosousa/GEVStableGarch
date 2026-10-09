@@ -171,6 +171,32 @@ coverage cells are the expensive part; keep them to the small subset above.
 - **Tolerance `tol`** for the gate is set at 10%; adjust after seeing the first
   Part A run (R = 100 Monte Carlo error on an RMSE is itself ~10%).
 
+## Results so far (recorded)
+
+**Part A** (R = 100, n = 2500, all 18 cells). On the 155 comparable parameters:
+53 better than 2012 (RMSE ratio < 0.9), 70 tie (0.9-1.15), 22 mild, 10 worse
+(> 1.3). The stable family (the package's headline) has median RMSE ratio 0.92
+and **zero** regressions. The 10 real regressions are all GEV ARMA(2,2) cells,
+7 of them in 9.16:set1.
+
+**Diagnosis of the GEV ARMA(2,2) soft spot.** Not an optimization defect:
+neither the new L-moment shape start nor 4-restart multistart lowers its RMSE,
+and the far-off replications are all stationary (0/100 with persistence >= 1).
+The estimator is **median-unbiased** there (median |median-bias| ~ 0.005 across
+the affected parameters, e.g. beta1 median 0.045 vs true 0.05); the elevated
+RMSE is variance from a heavy-tailed sampling distribution on weakly-identified
+high-order GARCH/APARCH coefficients. The 2012 lower RMSE is consistent with the
+old optimizer shrinking toward the start values (lower variance, some bias).
+
+**Consistency check** (cells 9.15, 9.16 at n = 2500, 5000, 10000; R = 100).
+RMSE falls **monotonically with n for all 50 parameters**, and at n = 10000 is
+at or below the 2012 n = 2500 value for **49 of 50** (the exception is 9.15:set1
+`delta`, the APARCH power, which decreases slowly). Several parameters the 2012
+version estimated poorly are far better here even at n = 2500 (9.16:set1 `xi`
+= -0.1: RMSE 0.203 in 2012 vs 0.014 here, a ~15x improvement; 9.16 `mu`
+similarly). This confirms the soft spot is small-sample variance, not a defect:
+the estimator is consistent and median-unbiased.
+
 ## References
 
 do Rego Sousa, T. (2012). Modelos combinados AR-GARCH. Master thesis
