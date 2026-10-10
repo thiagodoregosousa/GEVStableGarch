@@ -14,8 +14,8 @@ library(GEVStableGarch)
 
 GEVStableGarch fits, simulates and forecasts ARMA-GARCH/APARCH models whose
 innovations follow a stable, GEV or GAt distribution, or any distribution you
-define. This vignette walks through the workflow with stable innovations and
-then builds a user defined distribution.
+define. This vignette walks through the workflow with GEV innovations and
+then builds a user defined distribution; stable and GAt work the same way.
 
 ## The model
 
@@ -25,21 +25,23 @@ $$x_t = \mu + \sum_{i=1}^m a_i x_{t-i} + \sum_{j=1}^n b_j e_{t-j} + e_t, \qquad 
 $$\sigma_t^\delta = \omega + \sum_{i=1}^p \alpha_i (|e_{t-i}| - \gamma_i e_{t-i})^\delta + \sum_{j=1}^q \beta_j \sigma_{t-j}^\delta,$$
 
 with $z_t$ i.i.d. from the innovation distribution, standardized to location
-0 and scale 1. Stable innovations have infinite variance, so $\sigma_t$ is a
-conditional *scale*, and $E|z|^\delta$ is finite only for $\delta < \alpha$.
-In GARCH mode (`aparch = FALSE`) the power is fixed at 1 for stable
-innovations and 2 for GEV and GAt.
+0 and scale 1. The families differ in which moments exist: stable innovations
+have infinite variance, so $\sigma_t$ is a conditional *scale* and
+$E|z|^\delta$ is finite only for $\delta < \alpha$; GEV has finite variance
+when $\xi < 1/2$. In GARCH mode (`aparch = FALSE`) the power is fixed at 1 for
+stable innovations and 2 for GEV and GAt.
 
-## Stable AR(1)-APARCH(1,1)
+## GEV AR(1)-APARCH(1,1)
 
-A specification says which model to fit; a model adds parameter values.
+A specification says which model to fit; a model adds parameter values. The
+same code fits stable or GAt innovations by passing `gs_stable()` or
+`gs_gat()` instead of `gs_gev()`.
 
 ```{r}
-spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), aparch = TRUE, dist = gs_stable())
+spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), aparch = TRUE, dist = gs_gev())
 spec
-model <- gs_model(spec, mu = 0.0005, ar = 0.05, omega = 0.0002, alpha = 0.05,
-                  gamma = 0.3, beta = 0.85, delta = 1.2,
-                  dist_par = c(stable_alpha = 1.75, stable_beta = 0))
+model <- gs_model(spec, mu = 0.0005, ar = 0.05, omega = 0.02, alpha = 0.12,
+                  gamma = 0.5, beta = 0.6, delta = 1.0, dist_par = c(xi = 0.25))
 gs_stationarity(model)
 ```
 
@@ -47,16 +49,21 @@ The persistence $\alpha\, E(|z| - \gamma z)^\delta + \beta$ is below one, so
 the model has a stationary scale level. Simulate and fit:
 
 ```{r}
-x <- gs_sim(model, n = 1500, seed = 1)$y
+x <- gs_sim(model, n = 4000, seed = 7)$y
 fit <- gs_fit(x, spec)
 fit
 ```
+
+The estimates recover the true values — note the fit starts from
+data-driven defaults far from the truth (the leverage `gamma` from 0, the
+power `delta` from 2, `beta` from 0.8), so this is a genuine recovery, not a
+nudge from a warm start.
 
 Three kinds of residuals are available. The raw residuals are
 $e_t = x_t - \hat\mu - \sum \hat a_i x_{t-i} - \sum \hat b_j e_{t-j}$. Dividing them by the
 fitted scale gives the standardized residuals $\hat z_t = e_t / \hat\sigma_t$, the
 estimates of the innovations: if the model is right they are i.i.d. from the
-fitted stable law, so they should show no remaining autocorrelation, in
+fitted GEV law, so they should show no remaining autocorrelation, in
 themselves or in their absolute values (Ljung-Box tests).
 
 Applying the fitted distribution function gives the probability integral
@@ -75,7 +82,7 @@ ks.test(u, "punif")$p.value
 ## Forecasting and value at risk
 
 One step ahead the forecast is exact: location, scale and quantiles of a
-shifted and scaled stable law. The value at risk at level $p$ is minus the $p$
+shifted and scaled GEV law. The value at risk at level $p$ is minus the $p$
 quantile.
 
 ```{r}
