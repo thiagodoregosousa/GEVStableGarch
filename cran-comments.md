@@ -4,6 +4,11 @@ This is a resubmission of GEVStableGarch, which was archived on CRAN on
 2020-10-22. Version 2.0.0 is a complete rewrite with a new interface; the
 check problems that led to the archival no longer apply.
 
+I am the same maintainer and author as the archived version (Thiago do Rego
+Sousa). My email has changed from the old address used for version 1.x
+(thiagoestatistico@gmail.com) to my current address
+(thiagodoregosousa@gmail.com), which is the maintainer address in DESCRIPTION.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note. On win-builder (release and R-devel) the only
