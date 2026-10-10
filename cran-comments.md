@@ -6,8 +6,10 @@ check problems that led to the archival no longer apply.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes on a clean environment, other than the
-expected "New submission / package was archived on CRAN" note.
+0 errors | 0 warnings | 1 note. On win-builder (release and R-devel) the only
+note is the CRAN incoming feasibility note: "New submission", "Package was
+archived on CRAN", and possibly misspelled words in DESCRIPTION, which are the
+model acronyms APARCH, GAt and GEV and the word "pluggable" — all intentional.
 
 A local `R CMD check --as-cran` additionally reported one WARNING (the LaTeX
 package `inconsolata.sty` was not installed locally) and two NOTEs (HTML Tidy
