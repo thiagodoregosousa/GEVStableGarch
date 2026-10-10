@@ -20,6 +20,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/bgev.html">A new innovation distribution: bimodal GEV from the bgev package</a></li>
+    <li><a class="dropdown-item" href="articles/simulation-study.html">Monte Carlo simulation study</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -41,6 +42,12 @@
 <div id="todo-after-the-200-restructuring-2026-09-28" class="section level1">
 
 <p>Details of each finding in PLAN.md section 9 and NEWS.md.</p>
+<div class="section level2">
+<h2 id="investigate-gev-standardization-vs-the-2012-thesis-monte-carlo">Investigate GEV standardization vs the 2012 thesis (Monte Carlo)<a class="anchor" aria-label="anchor" href="#investigate-gev-standardization-vs-the-2012-thesis-monte-carlo"></a></h2>
+<ul><li>The Part B study (dev/benchmarks/arma-garch-mc) found that the GEV AR(1)-GARCH(1,1) cells with a large ARCH coefficient (Table 9.2 theta2 and theta3, alpha1 = 0.80 / 0.50) are near-non-stationary in 2.0.0: persistence 3.2 / 3.6, because GEV is standardized to location 0 scale 1 (so E z^2 ~ 3), not unit variance. Point estimates stay consistent (RMSE falls with n), but Hessian standard errors are mostly NA and the strict convergence gate drops with n, as expected for an explosive-variance model.</li>
+<li>The 2012 thesis treated these same cells as ordinary stationary GARCH, which only works if its GEV innovations were unit-variance standardized. So the standardization convention likely differs for these high-alpha GEV cells. Part A RMSE still matched, so the point estimates are comparable, but confirm the convention before the paper leans on theta2/theta3.</li>
+<li>Action: read the legacy 1.x GEV fit/sim path (dev/legacy) and the thesis to settle whether GEV was unit-variance or scale-1 standardized; decide whether to offer a unit-variance GEV option or to document the scale-1 convention and drop the explosive cells from comparisons.</li>
+</ul></div>
 <div class="section level2">
 <h2 id="report-the-libstable4u-density-bug-upstream">Report the libstable4u density bug upstream<a class="anchor" aria-label="anchor" href="#report-the-libstable4u-density-bug-upstream"></a></h2>
 <ul><li><p>Where: <a href="https://github.com/swihart/libstable4u/issues" class="external-link uri">https://github.com/swihart/libstable4u/issues</a> (maintainer Bruce Swihart, same as <a href="https://github.com/swihart/stable" class="external-link uri">https://github.com/swihart/stable</a>, which is the <code>stable</code> package, not libstable4u).</p></li>

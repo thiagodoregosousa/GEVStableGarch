@@ -2,6 +2,28 @@
 
 Details of each finding in PLAN.md section 9 and NEWS.md.
 
+## Investigate GEV standardization vs the 2012 thesis (Monte Carlo)
+
+- The Part B study (dev/benchmarks/arma-garch-mc) found that the GEV
+  AR(1)-GARCH(1,1) cells with a large ARCH coefficient (Table 9.2 theta2
+  and theta3, alpha1 = 0.80 / 0.50) are near-non-stationary in 2.0.0:
+  persistence 3.2 / 3.6, because GEV is standardized to location 0 scale
+  1 (so E z^2 ~ 3), not unit variance. Point estimates stay consistent
+  (RMSE falls with n), but Hessian standard errors are mostly NA and the
+  strict convergence gate drops with n, as expected for an
+  explosive-variance model.
+- The 2012 thesis treated these same cells as ordinary stationary GARCH,
+  which only works if its GEV innovations were unit-variance
+  standardized. So the standardization convention likely differs for
+  these high-alpha GEV cells. Part A RMSE still matched, so the point
+  estimates are comparable, but confirm the convention before the paper
+  leans on theta2/theta3.
+- Action: read the legacy 1.x GEV fit/sim path (dev/legacy) and the
+  thesis to settle whether GEV was unit-variance or scale-1
+  standardized; decide whether to offer a unit-variance GEV option or to
+  document the scale-1 convention and drop the explosive cells from
+  comparisons.
+
 ## Report the libstable4u density bug upstream
 
 - Where: <https://github.com/swihart/libstable4u/issues> (maintainer
