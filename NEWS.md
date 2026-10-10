@@ -48,10 +48,6 @@ so no compatibility layer is provided.
 
 ## Bug fixes
 
-* `libstable4u` 1.0.5 returns about half the stable density for points within
-  roughly 1e-5 of `zeta = -beta tan(pi alpha / 2)`. The resulting jumps of the
-  log likelihood (about 0.6) broke optimization and standard errors; the
-  density is now interpolated in a small window around `zeta`.
 * `pgat()` kept only a few digits next to zero; it now uses the exact upper
   beta tail.
 * The out-of-bounds penalty is now graded: it adds a term proportional to the

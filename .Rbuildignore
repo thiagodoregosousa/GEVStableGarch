@@ -6,3 +6,7 @@
 ^LICENSE$
 ^\.github$
 ^README\.md$
+^_pkgdown\.yml$
+^docs$
+^\.Rhistory$
+^cran-comments\.md$

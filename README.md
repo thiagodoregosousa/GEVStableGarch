@@ -107,9 +107,8 @@ GEVStableGarch builds on existing work and reuses it explicitly:
 The package's own contribution is the pluggable innovation-distribution
 interface (`gs_dist()` / `gs_check_dist()`), the closed-form APARCH moments
 $E(|z| - \gamma z)^\delta$ for the stable, GEV and GAt families (used for
-stationarity and multi-step scale forecasting), forecasting and
-Value-at-Risk for these families, and a correction to the `libstable4u`
-density near the point $\zeta$ that otherwise destabilizes the likelihood.
+stationarity and multi-step scale forecasting), and forecasting and
+Value-at-Risk for these families.
 
 ## Reference
 
