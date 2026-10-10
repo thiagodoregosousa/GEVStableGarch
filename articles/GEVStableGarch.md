@@ -3,7 +3,8 @@
 GEVStableGarch fits, simulates and forecasts ARMA-GARCH/APARCH models
 whose innovations follow a stable, GEV or GAt distribution, or any
 distribution you define. This vignette walks through the workflow with
-stable innovations and then builds a user defined distribution.
+GEV innovations and then builds a user defined distribution; stable and
+GAt work the same way.
 
 ## The model
 
@@ -17,26 +18,33 @@ x_t = \mu + \sum_{i=1}^m a_i x_{t-i} + \sum_{j=1}^n b_j e_{t-j} + e_t, \qquad e_
 ```
 
 with $`z_t`$ i.i.d. from the innovation distribution, standardized to
-location 0 and scale 1. Stable innovations have infinite variance, so
-$`\sigma_t`$ is a conditional *scale*, and $`E|z|^\delta`$ is finite
-only for $`\delta < \alpha`$. In GARCH mode (`aparch = FALSE`) the power
-is fixed at 1 for stable innovations and 2 for GEV and GAt.
+location 0 and scale 1. The families differ in which moments exist:
+stable innovations have infinite variance, so $`\sigma_t`$ is a
+conditional *scale* and $`E|z|^\delta`$ is finite only for
+$`\delta < \alpha`$; GEV has finite variance when $`\xi < 1/2`$. In
+GARCH mode (`aparch = FALSE`) the power is fixed at 1 for stable
+innovations and 2 for GEV and GAt.
 
-## Stable AR(1)-APARCH(1,1)
+## GEV AR(1)-APARCH(1,1)
 
 A specification says which model to fit; a model adds parameter values.
+The same code fits stable or GAt innovations by passing
+[`gs_stable()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_stable.md)
+or
+[`gs_gat()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_gat.md)
+instead of
+[`gs_gev()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_gev.md).
 
 ``` r
 
-spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), aparch = TRUE, dist = gs_stable())
+spec <- gs_spec(arma = c(1, 0), garch = c(1, 1), aparch = TRUE, dist = gs_gev())
 spec
-#> ARMA(1,0)-APARCH(1,1) with stable innovations
-#> Parameters: mu, ar1, omega, alpha1, gamma1, beta1, delta, stable_alpha, stable_beta
-model <- gs_model(spec, mu = 0.0005, ar = 0.05, omega = 0.0002, alpha = 0.05,
-                  gamma = 0.3, beta = 0.85, delta = 1.2,
-                  dist_par = c(stable_alpha = 1.75, stable_beta = 0))
+#> ARMA(1,0)-APARCH(1,1) with gev innovations
+#> Parameters: mu, ar1, omega, alpha1, gamma1, beta1, delta, xi
+model <- gs_model(spec, mu = 0.0005, ar = 0.05, omega = 0.02, alpha = 0.12,
+                  gamma = 0.5, beta = 0.6, delta = 1.0, dist_par = c(xi = 0.25))
 gs_stationarity(model)
-#> [1] 0.9300556
+#> [1] 0.7013768
 ```
 
 The persistence $`\alpha\, E(|z| - \gamma z)^\delta + \beta`$ is below
@@ -44,33 +52,37 @@ one, so the model has a stationary scale level. Simulate and fit:
 
 ``` r
 
-x <- gs_sim(model, n = 1500, seed = 1)$y
+x <- gs_sim(model, n = 4000, seed = 7)$y
 fit <- gs_fit(x, spec)
 fit
-#> ARMA(1,0)-APARCH(1,1) with stable innovations
-#>                Estimate Std. Error t value  Pr(>|t|)    
-#> mu           0.00036190 0.00035398  1.0224  0.306605    
-#> ar1          0.07625904 0.02344815  3.2522  0.001145 ** 
-#> omega        0.00152990 0.00135413  1.1298  0.258559    
-#> alpha1       0.06579599 0.01472356  4.4688 7.868e-06 ***
-#> gamma1       0.64638487 0.13443278  4.8082 1.523e-06 ***
-#> beta1        0.83074945 0.03189173 26.0491 < 2.2e-16 ***
-#> delta        0.84396574 0.16794399  5.0253 5.027e-07 ***
-#> stable_alpha 1.73230753 0.03873002 44.7278 < 2.2e-16 ***
-#> stable_beta  0.02331612 0.12197993  0.1911  0.848410    
+#> ARMA(1,0)-APARCH(1,1) with gev innovations
+#>          Estimate Std. Error t value  Pr(>|t|)    
+#> mu     -0.0012890  0.0011505 -1.1203   0.26257    
+#> ar1     0.0488366  0.0093522  5.2219 1.771e-07 ***
+#> omega   0.0232768  0.0100046  2.3266   0.01999 *  
+#> alpha1  0.1240942  0.0181085  6.8528 7.242e-12 ***
+#> gamma1  0.5150681  0.0658449  7.8224 5.181e-15 ***
+#> beta1   0.6106628  0.0505859 12.0718 < 2.2e-16 ***
+#> delta   0.9264252  0.1643601  5.6366 1.735e-08 ***
+#> xi      0.2698621  0.0133310 20.2432 < 2.2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> Log likelihood: 4454.0736   AIC: -8890.1471   BIC: -8842.3281   n = 1500
-#> Persistence: 0.9066
-#> Convergence: scaled gradient 2.1e-05, Hessian rcond 5.3e-05
+#> Log likelihood: 3937.9401   AIC: -7859.8802   BIC: -7809.5278   n = 4000
+#> Persistence: 0.7137
+#> Convergence: scaled gradient 1.0e-04, Hessian rcond 9.3e-05
 ```
+
+The estimates recover the true values — note the fit starts from
+data-driven defaults far from the truth (the leverage `gamma` from 0,
+the power `delta` from 2, `beta` from 0.8), so this is a genuine
+recovery, not a nudge from a warm start.
 
 Three kinds of residuals are available. The raw residuals are
 $`e_t = x_t - \hat\mu - \sum \hat a_i x_{t-i} - \sum \hat b_j e_{t-j}`$.
 Dividing them by the fitted scale gives the standardized residuals
 $`\hat z_t = e_t / \hat\sigma_t`$, the estimates of the innovations: if
-the model is right they are i.i.d. from the fitted stable law, so they
+the model is right they are i.i.d. from the fitted GEV law, so they
 should show no remaining autocorrelation, in themselves or in their
 absolute values (Ljung-Box tests).
 
@@ -84,25 +96,25 @@ pseudo observations that copula models take as input.
 
 z <- residuals(fit, type = "standardized")
 Box.test(abs(z), lag = 20, type = "Ljung-Box")$p.value
-#> [1] 0.9999373
+#> [1] 0.190353
 u <- residuals(fit, type = "pit")
 ks.test(u, "punif")$p.value
-#> [1] 0.6569764
+#> [1] 0.9696844
 ```
 
 ## Forecasting and value at risk
 
 One step ahead the forecast is exact: location, scale and quantiles of a
-shifted and scaled stable law. The value at risk at level $`p`$ is minus
+shifted and scaled GEV law. The value at risk at level $`p`$ is minus
 the $`p`$ quantile.
 
 ``` r
 
 predict(fit, n_ahead = 1, level = c(0.01, 0.05))
-#>   horizon      location          mean mean_method       sigma      q_0.01
-#> 1       1 -0.0009860477 -0.0008865495       exact 0.009543227 -0.04666434
-#>       q_0.05
-#> 1 -0.0255453
+#>   horizon      location       mean mean_method      sigma      q_0.01
+#> 1       1 -0.0001446314 0.05702881       exact 0.06103953 -0.07654194
+#>        q_0.05
+#> 1 -0.05811188
 ```
 
 Beyond one step the scale follows the APARCH recursion and the quantiles
@@ -111,12 +123,12 @@ come from simulated paths.
 ``` r
 
 predict(fit, n_ahead = 5, level = 0.01, n_sim = 5000, seed = 2)
-#>   horizon      location          mean mean_method       sigma      q_0.01
-#> 1       1 -0.0009860477 -0.0008865495       exact 0.009543227 -0.04666434
-#> 2       2            NA  0.0003184607   simulated 0.009365078 -0.04707034
-#> 3       3            NA  0.0004797099   simulated 0.009204016 -0.04658796
-#> 4       4            NA  0.0003397068   simulated 0.009058369 -0.04531276
-#> 5       5            NA  0.0005992927   simulated 0.008926633 -0.04633821
+#>   horizon      location       mean mean_method      sigma      q_0.01
+#> 1       1 -0.0001446314 0.05702881       exact 0.06103953 -0.07654194
+#> 2       2            NA 0.06164169   simulated 0.06263350 -0.07906787
+#> 3       3            NA 0.06349711   simulated 0.06377301 -0.08195583
+#> 4       4            NA 0.06331053   simulated 0.06458724 -0.08083717
+#> 5       5            NA 0.06382599   simulated 0.06516885 -0.08273912
 ```
 
 A rolling window backtest evaluates one step forecasts out of sample.
