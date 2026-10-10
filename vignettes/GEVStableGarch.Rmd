@@ -170,9 +170,9 @@ structure follow fGarch (Wuertz, Chalabi and Luksan, 2006); maximum
 likelihood optimization uses Rsolnp (Galanos and Ye, 2025); and the stable
 density uses libstable4u (Royuela-del-Val, Simmross-Wattenberg and
 Alberola-Lopez, 2017). Its own contribution is the pluggable
-innovation-distribution interface, the closed-form APARCH moments for the
-stable, GEV and GAt families, and forecasting and Value-at-Risk for these
-families.
+innovation-distribution interface and the closed-form APARCH moments for the
+stable, GEV and GAt families, which extend GARCH stationarity and forecasting
+(the standard fGarch-style recursion) to these heavy-tailed innovations.
 
 ## References
 
