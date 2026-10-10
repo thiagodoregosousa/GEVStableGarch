@@ -70,8 +70,6 @@
 <div class="section level3">
 <h3 id="bug-fixes-2-0-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-0-0"></a></h3>
 <ul><li>
-<code>libstable4u</code> 1.0.5 returns about half the stable density for points within roughly 1e-5 of <code>zeta = -beta tan(pi alpha / 2)</code>. The resulting jumps of the log likelihood (about 0.6) broke optimization and standard errors; the density is now interpolated in a small window around <code>zeta</code>.</li>
-<li>
 <code><a href="../reference/GAT.html">pgat()</a></code> kept only a few digits next to zero; it now uses the exact upper beta tail.</li>
 <li>The out-of-bounds penalty is now graded: it adds a term proportional to the size of the constraint violation (for example <code>delta</code> above the innovation moment bound, or a non-stationary AR polynomial) instead of a flat constant. The objective slopes back toward the feasible region, so the optimizer no longer stalls on a flat plateau.</li>
 </ul></div>

@@ -117,11 +117,11 @@ fit:</p>
 <span><span class="co">#&gt; ar1          0.07625904 0.02344815  3.2522  0.001145 ** </span></span>
 <span><span class="co">#&gt; omega        0.00152990 0.00135413  1.1298  0.258559    </span></span>
 <span><span class="co">#&gt; alpha1       0.06579599 0.01472356  4.4688 7.868e-06 ***</span></span>
-<span><span class="co">#&gt; gamma1       0.64638485 0.13443278  4.8082 1.523e-06 ***</span></span>
-<span><span class="co">#&gt; beta1        0.83074944 0.03189173 26.0491 &lt; 2.2e-16 ***</span></span>
-<span><span class="co">#&gt; delta        0.84396572 0.16794398  5.0253 5.027e-07 ***</span></span>
-<span><span class="co">#&gt; stable_alpha 1.73230752 0.03873002 44.7278 &lt; 2.2e-16 ***</span></span>
-<span><span class="co">#&gt; stable_beta  0.02331613 0.12197993  0.1911  0.848410    </span></span>
+<span><span class="co">#&gt; gamma1       0.64638487 0.13443278  4.8082 1.523e-06 ***</span></span>
+<span><span class="co">#&gt; beta1        0.83074945 0.03189173 26.0491 &lt; 2.2e-16 ***</span></span>
+<span><span class="co">#&gt; delta        0.84396574 0.16794399  5.0253 5.027e-07 ***</span></span>
+<span><span class="co">#&gt; stable_alpha 1.73230753 0.03873002 44.7278 &lt; 2.2e-16 ***</span></span>
+<span><span class="co">#&gt; stable_beta  0.02331612 0.12197993  0.1911  0.848410    </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -164,7 +164,7 @@ quantile.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, n_ahead <span class="op">=</span> <span class="fl">1</span>, level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   horizon      location          mean mean_method       sigma      q_0.01</span></span>
-<span><span class="co">#&gt; 1       1 -0.0009860477 -0.0008865494       exact 0.009543227 -0.04666434</span></span>
+<span><span class="co">#&gt; 1       1 -0.0009860477 -0.0008865495       exact 0.009543227 -0.04666434</span></span>
 <span><span class="co">#&gt;       q_0.05</span></span>
 <span><span class="co">#&gt; 1 -0.0255453</span></span></code></pre></div>
 <p>Beyond one step the scale follows the APARCH recursion and the
@@ -172,7 +172,7 @@ quantiles come from simulated paths.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, n_ahead <span class="op">=</span> <span class="fl">5</span>, level <span class="op">=</span> <span class="fl">0.01</span>, n_sim <span class="op">=</span> <span class="fl">5000</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   horizon      location          mean mean_method       sigma      q_0.01</span></span>
-<span><span class="co">#&gt; 1       1 -0.0009860477 -0.0008865494       exact 0.009543227 -0.04666434</span></span>
+<span><span class="co">#&gt; 1       1 -0.0009860477 -0.0008865495       exact 0.009543227 -0.04666434</span></span>
 <span><span class="co">#&gt; 2       2            NA  0.0003184607   simulated 0.009365078 -0.04707034</span></span>
 <span><span class="co">#&gt; 3       3            NA  0.0004797099   simulated 0.009204016 -0.04658796</span></span>
 <span><span class="co">#&gt; 4       4            NA  0.0003397068   simulated 0.009058369 -0.04531276</span></span>
@@ -260,7 +260,7 @@ forecasting:</p>
 <span><span class="co">#&gt; -0.03224600  0.09284506  0.13943092  0.77158255</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_n</span>, n_ahead <span class="op">=</span> <span class="fl">3</span>, n_sim <span class="op">=</span> <span class="fl">2000</span>, seed <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   horizon  location      mean mean_method    sigma    q_0.01    q_0.05</span></span>
-<span><span class="co">#&gt; 1       1 -0.032246 -0.032246       exact 1.172140 -2.759051 -1.960244</span></span>
+<span><span class="co">#&gt; 1       1 -0.032246 -0.032246       exact 1.172140 -2.759051 -1.960245</span></span>
 <span><span class="co">#&gt; 2       2        NA -0.032246       exact 1.159525 -2.697111 -1.968024</span></span>
 <span><span class="co">#&gt; 3       3        NA -0.032246       exact 1.147911 -2.716736 -1.857086</span></span></code></pre></div>
 </div>

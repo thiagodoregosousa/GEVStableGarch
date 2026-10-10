@@ -124,9 +124,7 @@ interface
 [`gs_check_dist()`](https://thiagodoregosousa.github.io/GEVStableGarch/reference/gs_check_dist.md)),
 the closed-form APARCH moments $`E(|z| - \gamma z)^\delta`$ for the
 stable, GEV and GAt families (used for stationarity and multi-step scale
-forecasting), forecasting and Value-at-Risk for these families, and a
-correction to the `libstable4u` density near the point $`\zeta`$ that
-otherwise destabilizes the likelihood.
+forecasting), and forecasting and Value-at-Risk for these families.
 
 ## Reference
 
