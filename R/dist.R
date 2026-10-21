@@ -132,11 +132,18 @@ gs_check_dist <- function(dist, par = dist$start, tol = 1e-3)
   if (!is.finite(total) || abs(total - 1) > tol)
     fail("log_density", sprintf("does not integrate to 1 (got %s)", format(total)))
 
-  # Random generator against the distribution function, without touching the user seed
-  draws <- .with_seed(20260928, dist$random(2000, par))
-  if (length(draws) != 2000 || any(!is.finite(draws)))
-    fail("random", "must return n finite draws")
-  if (stats::ks.test(draws, function(x) dist$cdf(x, par))$p.value < 1e-4)
+  # Random generator against the distribution function. The user's RNG stream is
+  # used as is (no seeding); a second draw guards against a rare false alarm of
+  # the Kolmogorov-Smirnov test, and the generator fails only if both draws do.
+  ks_p <- NA_real_
+  for (attempt in 1:2) {
+    draws <- dist$random(2000, par)
+    if (length(draws) != 2000 || any(!is.finite(draws)))
+      fail("random", "must return n finite draws")
+    ks_p <- stats::ks.test(draws, function(x) dist$cdf(x, par))$p.value
+    if (ks_p >= 1e-4) break
+  }
+  if (ks_p < 1e-4)
     fail("random", "draws do not follow `cdf` (Kolmogorov-Smirnov test)")
 
   # Moment declarations
@@ -230,18 +237,6 @@ print.gs_dist <- function(x, ...)
              error = function(e) stats::integrate(f, a, b, subdivisions = 5000L, rel.tol = 1e-6,
                                                   stop.on.error = FALSE)$value)
   sum(vapply(seq_len(length(bounds) - 1), function(i) piece(bounds[i], bounds[i + 1]), numeric(1)))
-}
-
-# Evaluate an expression with a fixed seed and restore the caller's RNG state
-.with_seed <- function(seed, expr)
-{
-  old <- if (exists(".Random.seed", envir = globalenv())) get(".Random.seed", envir = globalenv()) else NULL
-  on.exit({
-    if (is.null(old)) rm(".Random.seed", envir = globalenv())
-    else assign(".Random.seed", old, envir = globalenv())
-  })
-  set.seed(seed)
-  expr
 }
 
 # Parameter value inside bounds and valid

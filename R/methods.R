@@ -12,6 +12,20 @@
 #' @param object,x A `gs_fit` object.
 #' @param type Type of residuals.
 #' @param ... Unused.
+#' @return
+#' * `coef()`: named numeric vector of the estimated parameters.
+#' * `vcov()`: numeric matrix, the estimated covariance matrix of the
+#'   parameters (rows and columns in the order of `coef()`).
+#' * `logLik()`: an object of class `"logLik"`, the maximized log-likelihood,
+#'   with attributes `df` (number of parameters) and `nobs`.
+#' * `nobs()`: integer, the number of observations used in the fit.
+#' * `residuals()`: numeric vector with one value per observation, as
+#'   described by `type`.
+#' * `sigma()`, `fitted()`: numeric vectors with one value per observation,
+#'   the conditional scale and the conditional location.
+#' * `print()`, `summary()`: print the coefficient table (estimates, standard
+#'   errors, t and p values), information criteria, persistence and
+#'   convergence diagnostics, and return `x` (`object`) invisibly.
 #' @name gs_fit-methods
 NULL
 

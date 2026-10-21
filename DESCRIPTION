@@ -11,11 +11,14 @@ Authors@R: c(
     person("Diethelm", "Wuertz", role = c("ctb", "cph"),
            email = "wuertz@itp.phys.ethz.ch",
            comment = "filter and model structure adapted from fGarch"))
-Description: Simulation, estimation and forecasting of ARMA-GARCH/APARCH
-    models with stable (S0 parametrization), generalized extreme value (GEV)
-    and generalized asymmetric t (GAt) innovations. The innovation
-    distribution is a pluggable object, so user defined densities get the
-    same fitting, simulation, stationarity and forecasting machinery.
+Description: Simulation, estimation and forecasting of autoregressive moving
+    average (ARMA) models with generalized autoregressive conditional
+    heteroskedasticity (GARCH) or asymmetric power ARCH (APARCH, with ARCH the
+    autoregressive conditional heteroskedasticity model) errors, with stable
+    (S0 parametrization), generalized extreme value (GEV) and generalized
+    asymmetric t (GAt) innovations. The innovation distribution is a pluggable
+    object, so user defined densities get the same fitting, simulation,
+    stationarity and forecasting machinery.
 License: GPL (>= 2)
 URL: https://github.com/thiagodoregosousa/GEVStableGarch
 BugReports: https://github.com/thiagodoregosousa/GEVStableGarch/issues

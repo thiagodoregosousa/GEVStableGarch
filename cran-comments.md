@@ -9,6 +9,16 @@ Sousa). My email has changed from the old address used for version 1.x
 (thiagoestatistico@gmail.com) to my current address
 (thiagodoregosousa@gmail.com), which is the maintainer address in DESCRIPTION.
 
+## Changes after the manual review (Konstanze Lauseker)
+
+* DESCRIPTION: all acronyms (ARMA, GARCH, APARCH, ARCH, GEV, GAt) are now
+  spelled out.
+* Added `\value` to `gs_fit-methods.Rd`, describing the class and meaning of
+  each method's result.
+* The `GAT.Rd` example now restores `par()` after changing it.
+* The internal distribution check no longer seeds the RNG nor writes to
+  `.GlobalEnv`; it uses the caller's RNG stream as is.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note. On win-builder (release and R-devel) the only

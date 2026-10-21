@@ -47,7 +47,7 @@
 #' @author Thiago do Rego Sousa
 #'
 #' @examples
-#' par(mfrow = c(2, 2))
+#' oldpar <- par(mfrow = c(2, 2))
 #' set.seed(1000)
 #' r <- rgat(n = 1000)
 #' plot(r, type = "l", main = "GAt Random Values")
@@ -58,6 +58,7 @@
 #'
 #' plot(sort(r), (1:1000)/1000, main = "Probability", ylab = "Probability")
 #' lines(x, pgat(x), lwd = 2)
+#' par(oldpar)
 #'
 #' round(qgat(pgat(q = seq(-10, 10, by = 0.5))), 6)
 #'

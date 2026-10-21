@@ -38,6 +38,23 @@
 
 \item{type}{Type of residuals.}
 }
+\value{
+\itemize{
+\item \code{coef()}: named numeric vector of the estimated parameters.
+\item \code{vcov()}: numeric matrix, the estimated covariance matrix of the
+parameters (rows and columns in the order of \code{coef()}).
+\item \code{logLik()}: an object of class \code{"logLik"}, the maximized log-likelihood,
+with attributes \code{df} (number of parameters) and \code{nobs}.
+\item \code{nobs()}: integer, the number of observations used in the fit.
+\item \code{residuals()}: numeric vector with one value per observation, as
+described by \code{type}.
+\item \code{sigma()}, \code{fitted()}: numeric vectors with one value per observation,
+the conditional scale and the conditional location.
+\item \code{print()}, \code{summary()}: print the coefficient table (estimates, standard
+errors, t and p values), information criteria, persistence and
+convergence diagnostics, and return \code{x} (\code{object}) invisibly.
+}
+}
 \description{
 Accessors for \code{gs_fit} objects. \code{residuals()} returns, by \code{type}:
 \code{"raw"} the residuals \eqn{e_t}, \code{"standardized"} the innovations
