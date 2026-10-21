@@ -24,7 +24,8 @@ Sousa). My email has changed from the old address used for version 1.x
 0 errors | 0 warnings | 1 note. On win-builder (release and R-devel) the only
 note is the CRAN incoming feasibility note: "New submission", "Package was
 archived on CRAN", and possibly misspelled words in DESCRIPTION, which are the
-model acronyms APARCH, GAt and GEV and the word "pluggable" — all intentional.
+model acronyms APARCH, GAt and GEV and the words "heteroskedasticity" and
+"pluggable" — all intentional.
 
 A local `R CMD check --as-cran` additionally reported one WARNING (the LaTeX
 package `inconsolata.sty` was not installed locally) and two NOTEs (HTML Tidy
