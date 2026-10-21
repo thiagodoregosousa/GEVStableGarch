@@ -56,3 +56,33 @@ summary(object, ...)
 - type:
 
   Type of residuals.
+
+## Value
+
+- [`coef()`](https://rdrr.io/r/stats/coef.html): named numeric vector of
+  the estimated parameters.
+
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html): numeric matrix, the
+  estimated covariance matrix of the parameters (rows and columns in the
+  order of [`coef()`](https://rdrr.io/r/stats/coef.html)).
+
+- [`logLik()`](https://rdrr.io/r/stats/logLik.html): an object of class
+  `"logLik"`, the maximized log-likelihood, with attributes `df` (number
+  of parameters) and `nobs`.
+
+- [`nobs()`](https://rdrr.io/r/stats/nobs.html): integer, the number of
+  observations used in the fit.
+
+- [`residuals()`](https://rdrr.io/r/stats/residuals.html): numeric
+  vector with one value per observation, as described by `type`.
+
+- [`sigma()`](https://rdrr.io/r/stats/sigma.html),
+  [`fitted()`](https://rdrr.io/r/stats/fitted.values.html): numeric
+  vectors with one value per observation, the conditional scale and the
+  conditional location.
+
+- [`print()`](https://rdrr.io/r/base/print.html),
+  [`summary()`](https://rdrr.io/r/base/summary.html): print the
+  coefficient table (estimates, standard errors, t and p values),
+  information criteria, persistence and convergence diagnostics, and
+  return `x` (`object`) invisibly.

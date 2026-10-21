@@ -57,20 +57,20 @@ fit <- gs_fit(x, spec)
 fit
 #> ARMA(1,0)-APARCH(1,1) with gev innovations
 #>          Estimate Std. Error t value  Pr(>|t|)    
-#> mu     -0.0012890  0.0011505 -1.1203   0.26257    
-#> ar1     0.0488366  0.0093522  5.2219 1.771e-07 ***
-#> omega   0.0232768  0.0100046  2.3266   0.01999 *  
-#> alpha1  0.1240942  0.0181085  6.8528 7.242e-12 ***
-#> gamma1  0.5150681  0.0658449  7.8224 5.181e-15 ***
-#> beta1   0.6106628  0.0505859 12.0718 < 2.2e-16 ***
-#> delta   0.9264252  0.1643601  5.6366 1.735e-08 ***
-#> xi      0.2698621  0.0133310 20.2432 < 2.2e-16 ***
+#> mu     -0.0013077  0.0011576 -1.1296    0.2586    
+#> ar1     0.0489119  0.0094231  5.1907 2.096e-07 ***
+#> omega   0.0232646  0.0099927  2.3281    0.0199 *  
+#> alpha1  0.1241518  0.0181165  6.8530 7.233e-12 ***
+#> gamma1  0.5150713  0.0658653  7.8201 5.279e-15 ***
+#> beta1   0.6105201  0.0506309 12.0583 < 2.2e-16 ***
+#> delta   0.9266924  0.1643237  5.6394 1.706e-08 ***
+#> xi      0.2699059  0.0133333 20.2431 < 2.2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> Log likelihood: 3937.9401   AIC: -7859.8802   BIC: -7809.5278   n = 4000
+#> Log likelihood: 3937.9401   AIC: -7859.8803   BIC: -7809.5279   n = 4000
 #> Persistence: 0.7137
-#> Convergence: scaled gradient 1.0e-04, Hessian rcond 9.3e-05
+#> Convergence: scaled gradient 2.7e-05, Hessian rcond 9.3e-05
 ```
 
 The estimates recover the true values — note the fit starts from
@@ -96,10 +96,10 @@ pseudo observations that copula models take as input.
 
 z <- residuals(fit, type = "standardized")
 Box.test(abs(z), lag = 20, type = "Ljung-Box")$p.value
-#> [1] 0.190353
+#> [1] 0.1904216
 u <- residuals(fit, type = "pit")
 ks.test(u, "punif")$p.value
-#> [1] 0.9696844
+#> [1] 0.9660792
 ```
 
 ## Forecasting and value at risk
@@ -111,10 +111,8 @@ the $`p`$ quantile.
 ``` r
 
 predict(fit, n_ahead = 1, level = c(0.01, 0.05))
-#>   horizon      location       mean mean_method      sigma      q_0.01
-#> 1       1 -0.0001446314 0.05702881       exact 0.06103953 -0.07654194
-#>        q_0.05
-#> 1 -0.05811188
+#>   horizon      location      mean mean_method      sigma    q_0.01      q_0.05
+#> 1       1 -0.0001615414 0.0570059       exact 0.06102797 -0.076542 -0.05811649
 ```
 
 Beyond one step the scale follows the APARCH recursion and the quantiles
@@ -124,11 +122,11 @@ come from simulated paths.
 
 predict(fit, n_ahead = 5, level = 0.01, n_sim = 5000, seed = 2)
 #>   horizon      location       mean mean_method      sigma      q_0.01
-#> 1       1 -0.0001446314 0.05702881       exact 0.06103953 -0.07654194
-#> 2       2            NA 0.06164169   simulated 0.06263350 -0.07906787
-#> 3       3            NA 0.06349711   simulated 0.06377301 -0.08195583
-#> 4       4            NA 0.06331053   simulated 0.06458724 -0.08083717
-#> 5       5            NA 0.06382599   simulated 0.06516885 -0.08273912
+#> 1       1 -0.0001615414 0.05700590       exact 0.06102797 -0.07654200
+#> 2       2            NA 0.06162213   simulated 0.06262358 -0.07906718
+#> 3       3            NA 0.06347836   simulated 0.06376412 -0.08196612
+#> 4       4            NA 0.06329300   simulated 0.06457899 -0.08084769
+#> 5       5            NA 0.06380899   simulated 0.06516099 -0.08273424
 ```
 
 A rolling window backtest evaluates one step forecasts out of sample.
@@ -216,7 +214,7 @@ coef(fit_n)
 #> -0.03224600  0.09284506  0.13943092  0.77158255
 predict(fit_n, n_ahead = 3, n_sim = 2000, seed = 4)
 #>   horizon  location      mean mean_method    sigma    q_0.01    q_0.05
-#> 1       1 -0.032246 -0.032246       exact 1.172140 -2.759051 -1.960245
+#> 1       1 -0.032246 -0.032246       exact 1.172140 -2.759051 -1.960244
 #> 2       2        NA -0.032246       exact 1.159525 -2.697111 -1.968024
 #> 3       3        NA -0.032246       exact 1.147911 -2.716736 -1.857086
 ```

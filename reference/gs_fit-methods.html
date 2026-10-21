@@ -110,6 +110,23 @@ conditional location \(x_t - e_t\).</p>
 <dd><p>Type of residuals.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+
+<ul><li><p><code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>: named numeric vector of the estimated parameters.</p></li>
+<li><p><code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>: numeric matrix, the estimated covariance matrix of the
+parameters (rows and columns in the order of <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>).</p></li>
+<li><p><code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>: an object of class <code>"logLik"</code>, the maximized log-likelihood,
+with attributes <code>df</code> (number of parameters) and <code>nobs</code>.</p></li>
+<li><p><code><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs()</a></code>: integer, the number of observations used in the fit.</p></li>
+<li><p><code><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals()</a></code>: numeric vector with one value per observation, as
+described by <code>type</code>.</p></li>
+<li><p><code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted()</a></code>: numeric vectors with one value per observation,
+the conditional scale and the conditional location.</p></li>
+<li><p><code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>: print the coefficient table (estimates, standard
+errors, t and p values), information criteria, persistence and
+convergence diagnostics, and return <code>x</code> (<code>object</code>) invisibly.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

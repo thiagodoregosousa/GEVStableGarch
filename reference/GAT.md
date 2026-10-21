@@ -104,7 +104,7 @@ Thiago do Rego Sousa
 ## Examples
 
 ``` r
-par(mfrow = c(2, 2))
+oldpar <- par(mfrow = c(2, 2))
 set.seed(1000)
 r <- rgat(n = 1000)
 plot(r, type = "l", main = "GAt Random Values")
@@ -115,11 +115,12 @@ lines(x, dgat(x), lwd = 2)
 
 plot(sort(r), (1:1000)/1000, main = "Probability", ylab = "Probability")
 lines(x, pgat(x), lwd = 2)
+par(oldpar)
+
 
 round(qgat(pgat(q = seq(-10, 10, by = 0.5))), 6)
 #>  [1] -10.0  -9.5  -9.0  -8.5  -8.0  -7.5  -7.0  -6.5  -6.0  -5.5  -5.0  -4.5
 #> [13]  -4.0  -3.5  -3.0  -2.5  -2.0  -1.5  -1.0  -0.5   0.0   0.5   1.0   1.5
 #> [25]   2.0   2.5   3.0   3.5   4.0   4.5   5.0   5.5   6.0   6.5   7.0   7.5
 #> [37]   8.0   8.5   9.0   9.5  10.0
-
 ```
